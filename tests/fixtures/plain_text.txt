@@ -1,0 +1,124 @@
+The History of Distributed Computing
+
+Distributed computing has evolved dramatically over the past several decades,
+transforming from a niche academic pursuit into the backbone of modern technology
+infrastructure. This document traces the key developments, ideas, and systems
+that shaped the field.
+
+The roots of distributed computing can be traced to the 1960s and 1970s, when
+researchers first began connecting computers over networks. The ARPANET, funded
+by the United States Department of Defense, became operational in 1969 and
+connected four university nodes. This early network demonstrated that geographically
+separated computers could communicate and share resources effectively.
+
+In the 1970s, Xerox PARC developed the Ethernet protocol, which enabled local
+area networks. Bob Metcalfe's original Ethernet specification operated at 2.94
+megabits per second. This technology made it practical for organizations to
+connect dozens or hundreds of computers within a single building or campus.
+
+The concept of remote procedure calls (RPC) emerged in the early 1980s through
+the work of Bruce Jay Nelson at Xerox PARC and Andrew Birrell at DEC. RPC
+allowed programs on one machine to invoke procedures on another machine as if
+they were local function calls. This abstraction became foundational for
+distributed system design. Sun Microsystems later popularized RPC with their
+Open Network Computing implementation.
+
+Concurrent with RPC development, Leslie Lamport published his seminal 1978 paper
+on logical clocks, introducing the "happens-before" relationship that provided
+a way to reason about ordering of events in distributed systems. His later work
+on the Paxos consensus algorithm (first submitted in 1989, published in 1998)
+solved the problem of achieving agreement among distributed processes in the
+presence of failures.
+Page 2
+
+The 1990s brought the World Wide Web and the explosive growth of the internet.
+Tim Berners-Lee's invention at CERN in 1989-1991 created a simple yet powerful
+distributed system: web browsers communicated with web servers using HTTP, and
+documents were linked through URLs. The web demonstrated that distributed systems
+could be made accessible to ordinary users, not just computer scientists.
+
+The challenge of building reliable distributed systems was formalized by Eric
+Brewer in 2000 with the CAP theorem, later proved by Seth Gilbert and Nancy
+Lynch. The theorem states that a distributed system cannot simultaneously provide
+all three of the following guarantees: Consistency (every read receives the most
+recent write), Availability (every request receives a response), and Partition
+tolerance (the system continues to operate despite network partitions). This
+insight forced system designers to make explicit tradeoffs.
+
+Google published three papers that transformed large-scale distributed computing.
+The Google File System paper (2003) described a scalable distributed file system
+for large data-intensive applications. The MapReduce paper (2004) introduced a
+programming model for processing large datasets across clusters of computers.
+The Bigtable paper (2006) described a distributed storage system for structured
+data. These papers inspired the creation of Apache Hadoop and the broader big
+data ecosystem.
+
+Amazon contributed equally transformative ideas. Werner Vogels and the Amazon
+team published the Dynamo paper in 2007, describing a highly available key-value
+store that used techniques like consistent hashing, vector clocks, and sloppy
+quorums. Dynamo inspired Apache Cassandra, Riak, and other distributed databases.
+Amazon Web Services, launched in 2006, made distributed computing infrastructure
+available on-demand through cloud services.
+Page 3
+
+The 2010s saw the emergence of container orchestration as a dominant paradigm for
+distributed systems. Docker, released in 2013, popularized operating-system-level
+virtualization through containers. Google open-sourced Kubernetes in 2014, drawing
+on their internal experience with Borg and Omega cluster management systems.
+Kubernetes provided a declarative approach to managing containerized applications
+across clusters of machines.
+
+The microservices architectural style, popularized by Martin Fowler and James
+Lewis around 2014, advocated decomposing applications into small, independently
+deployable services. Each service would own its data, communicate via APIs, and
+be developed by a small team. This approach enabled organizations like Netflix,
+Uber, and Spotify to scale their engineering organizations alongside their systems.
+
+Stream processing systems emerged to handle real-time data. Apache Kafka, originally
+developed at LinkedIn and open-sourced in 2011, provided a distributed event
+streaming platform. Apache Flink and Apache Spark Streaming offered frameworks
+for processing unbounded streams of data. These systems enabled use cases like
+real-time analytics, event-driven architectures, and complex event processing.
+
+The concept of serverless computing, pioneered by AWS Lambda in 2014, abstracted
+away server management entirely. Developers could write functions that were
+triggered by events, with the cloud provider handling all infrastructure concerns.
+This represented a further evolution in the level of abstraction available to
+developers building distributed applications.
+
+Consensus algorithms continued to evolve. Diego Ongaro and John Ousterhout
+published the Raft consensus algorithm in 2014, designed to be more understandable
+than Paxos while providing equivalent guarantees. Raft was adopted by etcd (the
+key-value store underlying Kubernetes), CockroachDB, and other distributed systems.
+Page 4
+
+Looking forward, several trends are shaping the future of distributed computing.
+
+Edge computing pushes computation closer to data sources, reducing latency for
+applications like autonomous vehicles, augmented reality, and industrial IoT.
+Rather than sending all data to centralized cloud data centers, edge computing
+processes data at the network edge, with only aggregated results transmitted
+to the cloud.
+
+WebAssembly (Wasm) is emerging as a portable runtime for distributed workloads.
+Originally designed for web browsers, Wasm provides a sandboxed execution
+environment that can run at near-native speed across different architectures.
+Projects like Fermyon Spin and Cosmonic are building distributed application
+platforms on top of Wasm.
+
+Quantum computing, while still in its early stages, promises to solve certain
+classes of problems exponentially faster than classical computers. Distributed
+quantum computing systems may eventually enable new forms of parallel processing
+and secure communication through quantum key distribution.
+
+The ongoing challenge of building correct distributed systems has led to increased
+interest in formal verification. Tools like TLA+ (created by Leslie Lamport)
+and Alloy allow engineers to specify and check the properties of distributed
+protocols before implementation. Amazon has reported using TLA+ extensively to
+verify the correctness of critical distributed systems at AWS.
+
+As distributed computing continues to evolve, the fundamental challenges identified
+decades ago -- consensus, fault tolerance, consistency, and partition tolerance --
+remain central. What has changed is the scale, the tooling, and the level of
+abstraction available to engineers building the next generation of distributed
+systems.

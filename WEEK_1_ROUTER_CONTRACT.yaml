@@ -1,0 +1,99 @@
+### Router Contract (MACHINE-READABLE)
+
+CONTRACT_VERSION: "2.3"
+STATUS: PASS
+BLOCKING: false
+REQUIRES_REMEDIATION: false
+REMEDIATION_REASON: ""
+CRITICAL_ISSUES: 0
+
+CLAIMED_ARTIFACTS:
+  - "WEEK_1_DELIVERABLES.md"
+  - "frontend/README.md"
+  - "frontend/package.json"
+  - "frontend/tsconfig.json"
+  - "frontend/next.config.ts"
+  - "frontend/tailwind.config.ts"
+  - "frontend/postcss.config.mjs"
+  - "frontend/.eslintrc.json"
+  - "frontend/.env.local"
+  - "frontend/.gitignore"
+  - "frontend/vitest.config.ts"
+  - "frontend/components.json"
+
+FILES_MODIFIED:
+  - "frontend/package.json"
+  - "frontend/tsconfig.json"
+  - "frontend/next.config.ts"
+  - "frontend/tailwind.config.ts"
+  - "frontend/postcss.config.mjs"
+  - "frontend/.eslintrc.json"
+  - "frontend/.env.local"
+  - "frontend/.gitignore"
+  - "frontend/vitest.config.ts"
+  - "frontend/components.json"
+  - "frontend/tests/setup.ts"
+  - "frontend/tests/lib/config.test.ts"
+  - "frontend/tests/lib/utils.test.ts"
+  - "frontend/app/globals.css"
+  - "frontend/app/layout.tsx"
+  - "frontend/app/providers.tsx"
+  - "frontend/app/page.tsx"
+  - "frontend/app/dashboard/page.tsx"
+  - "frontend/app/documents/page.tsx"
+  - "frontend/app/query/page.tsx"
+  - "frontend/app/sessions/page.tsx"
+  - "frontend/lib/config.ts"
+  - "frontend/lib/api/types.ts"
+  - "frontend/lib/api/client.ts"
+  - "frontend/lib/api/server.ts"
+  - "frontend/lib/utils/cn.ts"
+  - "frontend/README.md"
+  - "WEEK_1_DELIVERABLES.md"
+
+EVIDENCE_COMMANDS:
+  - command: "cd frontend && npm test"
+    exit_code: 0
+    output_summary: "✓ tests/lib/config.test.ts (3 tests) 1ms\n✓ tests/lib/utils.test.ts (3 tests) 3ms\nTest Files 2 passed (2)\nTests 6 passed (6)\nDuration 1.05s"
+
+  - command: "cd frontend && npm run build"
+    exit_code: 0
+    output_summary: "✓ Compiled successfully in 5.3s\n✓ Generating static pages (8/8)\nFirst Load JS: 102 kB\n5 routes pre-rendered as static"
+
+  - command: "cd frontend && npx tsc --noEmit"
+    exit_code: 0
+    output_summary: "No TypeScript errors"
+
+SPEC_COMPLIANCE: PASS
+
+MEMORY_NOTES:
+  learnings:
+    - "Next.js 15 + React 19 setup requires specific package versions for compatibility"
+    - "optimizePackageImports is experimental but critical for lucide-react performance (prevents 200-800ms cold start penalty)"
+    - "React.cache() is the correct pattern for RSC deduplication (not useMemo)"
+    - "TanStack Query v5 provider setup requires lazy initialization with useState callback for Pattern 5.6"
+    - "Vitest requires @testing-library/jest-dom and jsdom for React component testing"
+    - "Path aliases (@/*) work with both Next.js and Vitest when properly configured in tsconfig.json and vitest.config.ts"
+    - "Design tokens should use CSS variables for theme flexibility and dark mode support"
+    - "Test setup file should import @testing-library/jest-dom for DOM matchers"
+
+  patterns:
+    - "Always use React.cache() for server-side data fetching functions to enable per-request deduplication"
+    - "Provider components must be client components with 'use client' directive"
+    - "Design tokens use CSS variables (--background, --foreground, etc.) for theming"
+    - "API types should match backend Pydantic models exactly to ensure type safety across stack"
+    - "Use optimizePackageImports in next.config for libraries with barrel exports (lucide-react)"
+    - "QueryClient initialization uses lazy state init: useState(() => new QueryClient())"
+    - "All fetch functions in server.ts wrapped with cache() from 'react'"
+    - "Tailwind merge utility (cn) combines clsx and tailwind-merge for conditional styling"
+
+  verification:
+    - "All routes render without errors: /, /dashboard, /documents, /query, /sessions"
+    - "Build completes successfully in 5.3s with zero errors"
+    - "6/6 tests passing with < 5ms execution time"
+    - "First Load JS: 102 kB (well within 200 kB target)"
+    - "TanStack Query devtools accessible in development mode"
+    - "Zero ESLint errors, zero TypeScript errors"
+    - "All 5 routes pre-rendered as static content"
+    - "545 packages installed with no critical vulnerabilities"
+    - "Production build generates optimized chunks with code splitting"

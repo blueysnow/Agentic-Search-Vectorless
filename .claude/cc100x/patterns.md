@@ -1,0 +1,109 @@
+<!-- CC100x Memory File - DO NOT manually edit section headers -->
+
+## Common Gotchas
+- [ui-week1] Error format for client API: '{detail} ({status})' - preserves both server message and HTTP code
+- [ui-week1] Error format for server API: 'Failed to fetch {resource} {id}: {status} {statusText}' - full context
+- [ui-week1] Always wrap JSON parsing in try/catch and log parse errors with console.error()
+- [ui-week1] Error boundaries provide two recovery paths: reset() to retry, home link to escape
+- [ui-week1] Show generic error messages in production (security), detailed in development (debugging)
+- [ui-week1] Test error boundaries by verifying: render, reset callback, home link, dev vs prod messages
+- [ui-week1] Server fetch tests must use unique resource IDs to avoid React.cache() cross-test pollution
+- [ui-week1] Defer HIGH issues with clear rationale rather than implementing unused/untestable code
+- [ui-week1] Generic production errors: {process.env.NODE_ENV === 'development' ? error.message : 'Generic message'}
+- [ui-week1] Status code preservation: `${errorDetail} (${res.status})`
+- [ui-week1] Error boundary pattern: console.error for monitoring + conditional UI message
+- [ui-week1] API client error handling: try-catch with parse error logging + status preservation
+- [ui-week1] Config validation: process.env.NEXT_PUBLIC_* with fallback defaults
+- [ui-week1] Test pattern: Mock fetch globally, assert status codes in error messages
+- [ui-week1] React Query lazy init: useState(() => new QueryClient()) prevents re-instantiation
+- [ui-week1] .gitignore pattern: .env*.local covers all local environment files
+- [ui-week1-verifier] Dev server verification: background process + sleep + curl HTTP check + log analysis
+- [ui-week1-verifier] Route testing: automated curl loop for all 5 routes with HTTP status code validation
+- [ui-week1-verifier] UI component detection: HTML parsing for Tailwind classes and Radix UI data attributes
+- [ui-week1-verifier] Pattern verification: direct file reads of next.config.ts, lib/api/server.ts, app/providers.tsx with line-level confirmation
+- [ui-week1-verifier] Type guard pattern needed for catch blocks: if (error instanceof AppError) { expect(error.statusCode).toBe(500) }
+- [ui-week2] AbortController timeout pattern: create controller → setTimeout(abort, timeout) → pass signal to fetch → clearTimeout in try/finally
+- [ui-week2] Three-tier timeout constants: DEFAULT (10s), QUERY (60s for LLM), UPLOAD (300s for 50MB)
+- [ui-week2] Timeout error conversion: catch AbortError → throw user-friendly timeout message with duration
+- [ui-week2] Validation error state clearing: must clear on BOTH successful validation AND file input change (not just submit)
+- [ui-week2] Silent failure audit finds issues automated tests miss: empty validation feedback, infinite loading states
+- [ui-week2] Remediation Re-Review Loop: REM-FIX → re-hunt → 3 re-reviewers → re-challenge → verifier (ensures code changes audited)
+- [ui-week2] CONDITIONAL PASS verdict documents production requirements without blocking merge (e.g., "backend must validate MIME")
+- [ui-week2] Cosmetic UX issues can defer to backlog when functional workaround exists (NEW-001: error persists until next submit)
+- [ui-week2] Native Web APIs have zero bundle impact (AbortController, setTimeout are browser primitives)
+- [ui-week2-verifier] TanStack Query dev server startup lag: use sleep 8+ before curl check (server takes ~8s to become accessible)
+- [ui-week2-verifier] ESLint warnings (unused vars) are non-blocking: exit code 0, but should fix for clean DX
+- [ui-week2-verifier] Vercel patterns are context-dependent: parallel fetching (3.3) not needed for single-resource pages
+- Atlas Search (Lucene) != Atlas Vector Search - don't conflate them
+- Atlas Search is FREE and built-in to MongoDB; Vector Search is separate and costs extra
+- PageIndex tree structure is pure JSON - maps directly to MongoDB documents
+- Vectorless RAG = no embeddings, no vector DB, reasoning-based retrieval
+- "Agentic Search" is broader term; "Vectorless RAG" is the specific approach
+- User's shell has aliased find->fd and du->dust; use ls/wc instead
+- Node content (full text) must live in `pages` collection, NOT embedded in `nodes` - keeps tree traversal fast
+- Atlas Search boost is applied at QUERY time, not index time - index definitions use analyzers only
+- PageIndex has 3 tree-building modes: ToC+pages, ToC-only, no-ToC - must implement all three
+- Materialized path uses forward-slash separator: "/0001/0003/0006"
+- $graphLookup needs restrictSearchWithMatch for documentId scoping
+- Write order matters: documents first (status:processing), then nodes, then pages, then update status
+- Atlas Search index must have dynamic:false for production (explicit field mappings only)
+- LLM provider: NEVER return sentinel values on error (e.g. LLMResponse(content="Error")) - always raise exceptions
+- LLM provider: distinguish retryable (429, timeout, 500/503) from non-retryable (401, 403, 400) errors
+- extract_json() returns None on failure, not {} - callers MUST check for None
+- tiktoken: cache encoder with @lru_cache - encoding_for_model() is expensive per-call
+- MongoDB: configure MongoClient pool explicitly (maxPoolSize, serverSelectionTimeoutMS, socketTimeoutMS)
+- Retry strategy: use exponential backoff + jitter, NOT flat delay - respect Retry-After headers
+- Pydantic SecretStr for any credential field (API keys, MongoDB URI) - prevents accidental logging
+- conftest.py: always call get_settings.cache_clear() in autouse fixtures to prevent stale config
+- nodes_crossRef_target index should include documentId prefix for single-document scoping
+- PyPDF2 is deprecated; pypdf is the successor (not urgent but track for future)
+- asyncio.gather: ALWAYS use return_exceptions=True -- one failure kills all siblings without it
+- asyncio.gather: isinstance(result, Exception) is standard pattern for handling individual failures
+- extract_json() callers: MUST check `if result is None` -- 15+ call sites in Phase 2
+- int() on LLM data: ALWAYS wrap in try/except ValueError -- LLM strings can be malformed
+- LLM prompts: wrap ALL user-sourced content in XML delimiters (<document_text>, <page_text>, etc.)
+- Never use bare json.loads on LLM output -- always use extract_json() which returns None on failure
+- Tree persistence: use _collect_nodes (recursive) + insert_many (batch) -- not insert_one per node
+- Empty-after-filter guard: check list length after filtering before passing to next stage
+- Error boundaries in pipeline: re-raise critical (tree building), swallow non-critical (summaries)
+- Concurrent verification: if >50% of checks throw exceptions, abort with 0.0 accuracy
+- Sync vs async LLM: toc_detector/transformer are sync, verifier/enrichment are async -- convert all to async before API phase
+- Unbounded asyncio.gather: add Semaphore(10-20) before Phase 3 to prevent LLM rate limit storms
+- Mock provider factory with call counter works well for sequential LLM response testing
+- asyncio.gather + return_exceptions=True: NEVER use tuple destructuring on results -- unpack to flat vars, then isinstance check
+- Generator expressions create their own scope: `min(x for x in range(N))` shadows outer loop vars silently
+- ThreadPoolExecutor(max_workers=5) + as_completed(timeout=10) for parallel sync MongoDB reads in async context
+- Session persistence must NEVER crash after answer is computed -- always wrap in try/except
+- Hallucinated LLM node IDs: check if loaded content is empty before passing to reasoner
+- Sync pymongo blocks async event loop -- use asyncio.to_thread() or migrate to Motor for latency-sensitive paths
+- Tree navigator children: batch query with $in instead of N+1 sequential _get_children calls
+- Atlas Search boost hierarchy: title(10x) > summary(5x) > keywords(3x) -- applied at query time
+- Reasoner: clamp confidence to [0.0, 1.0], validate action types against frozenset whitelist
+- Session manager: atomic $push + $inc in single update_one for turn addition
+- Merger: min-max normalization with zero-spread guard (avoid divide by zero)
+- Pipeline: cap candidate_ids to top_n_candidates per iteration to prevent unbounded LLM context growth
+- Content loader fallback: nodeId-based page lookup first, then page range from node metadata
+- RetrievalSession model needs extra="ignore" to handle unexpected MongoDB fields
+- User queries in log extra dicts: hash or truncate for production (PII concern)
+- No input length validation = DoS vector: add MAX_QUERY_LENGTH at pipeline entry
+- FastAPI lifespan must re-raise on startup DB failure -- swallowed exception means app serves with broken DB
+- All 404/500 error details must be generic -- never reflect user-supplied IDs back in error messages
+- FastAPI Path(pattern=...) for ID validation, Query(ge=..., le=...) for pagination bounds -- validate at API boundary
+- structlog get_logger(__name__) is the ONLY logging pattern -- never use logging.getLogger
+- _safe_validation_detail: strip ctx/url/input from Pydantic errors before sending to client
+- Rate limit handlers must use generic messages -- exc.detail from slowapi leaks config strings
+- CORS disabled by default (empty cors_origins) -- explicit opt-in per deployment
+- Sanitize exception strings at write time (before MongoDB persist), not just at read time
+- POST body fields need same validation as GET path params -- consistency gap is a security risk
+- BaseHTTPMiddleware adds per-request overhead -- use raw ASGI middleware for production
+- get_remote_address rate limiting is bypassable behind reverse proxy -- configure for deployment topology
+- In-memory rate limiter (slowapi default) not horizontally scalable -- Redis/MongoDB backend for multi-instance
+- Sync-def FastAPI routes run in threadpool (acceptable for low-traffic reads) vs async-def + asyncio.to_thread (explicit, preferred)
+- Benchmark silent failures: generic error handler + output dict defaults creates invisible bugs when benchmark returns None
+- Exception type differentiation: TimeoutError (transient, WARNING), ValueError/KeyError (config, ERROR), generic Exception (unknown, ERROR)
+- Benchmark output validation: assert isinstance(dict), validate required keys exist, check value ranges before extraction
+- Structured logging for exceptions: capture type, message, and full traceback as separate fields (not monolithic string)
+- Post-mortem debugging requires: exception type name + traceback + context about what was executing when it failed
+- Benchmark factory pattern: pre-configured test case suites for ingest/retrieval/accuracy/load/cost/E2E scenarios
+- BenchmarkResult consistency: always return dict with all fields (use defaults 0.0 for missing, not None)
+- Benchmark suite composition: compose from atomic test cases (not inheritance) for flexibility and reuse

@@ -1,0 +1,500 @@
+TABLE OF CONTENTS
+
+Introduction
+System Requirements
+Installation Guide
+  Prerequisites
+  Step-by-Step Installation
+  Post-Installation Verification
+Configuration
+  Environment Variables
+  Database Configuration
+  Authentication Setup
+API Reference
+  REST Endpoints
+  WebSocket API
+  Error Codes
+Troubleshooting
+  Common Issues
+  Log Analysis
+  Performance Tuning
+Appendix
+  Glossary
+  Changelog
+Page 1
+
+INTRODUCTION
+
+Welcome to the DataStream Platform Technical Manual, version 3.2.
+
+DataStream is a real-time data processing platform designed for enterprise
+workloads. It provides scalable ingestion, transformation, and delivery of
+structured and unstructured data across distributed systems.
+
+This manual covers installation, configuration, API usage, and
+troubleshooting for the DataStream Platform. It is intended for system
+administrators, DevOps engineers, and backend developers.
+
+Key features of DataStream 3.2:
+- Real-time event processing with sub-millisecond latency
+- Horizontal scaling to 10,000+ concurrent connections
+- Built-in support for Apache Kafka, RabbitMQ, and Amazon SQS
+- RESTful API and WebSocket interface
+- Role-based access control (RBAC) with LDAP/SAML integration
+- Comprehensive monitoring via Prometheus and Grafana dashboards
+
+For API client library documentation, see the separate SDK Reference Guide.
+For architecture deep-dives, refer to the DataStream Architecture Whitepaper.
+Page 2
+
+SYSTEM REQUIREMENTS
+
+Minimum hardware requirements for a single-node deployment:
+- CPU: 4 cores (x86_64 or ARM64)
+- RAM: 8 GB
+- Disk: 50 GB SSD (NVMe recommended)
+- Network: 1 Gbps
+
+Recommended hardware for production (3-node cluster):
+- CPU: 16 cores per node
+- RAM: 64 GB per node
+- Disk: 500 GB NVMe SSD per node
+- Network: 10 Gbps between nodes
+
+Supported operating systems:
+- Ubuntu 22.04 LTS or later
+- Red Hat Enterprise Linux 9.x
+- Amazon Linux 2023
+- Debian 12 (Bookworm)
+
+Required software dependencies:
+- Docker 24.0+ and Docker Compose 2.20+
+- PostgreSQL 15+ (for metadata store)
+- Redis 7.0+ (for caching and session management)
+- Node.js 20 LTS (for management dashboard)
+Page 3
+
+INSTALLATION GUIDE
+
+Prerequisites
+
+Before installing DataStream, ensure the following prerequisites are met:
+
+1. Docker and Docker Compose are installed and running:
+   $ docker --version
+   $ docker compose version
+
+2. PostgreSQL is accessible and a database has been created:
+   $ psql -h localhost -U datastream -d datastream_meta -c "SELECT 1;"
+
+3. Redis is running and accessible:
+   $ redis-cli ping
+   Expected output: PONG
+
+4. Required ports are available:
+   - 8080 (REST API)
+   - 8443 (REST API with TLS)
+   - 9090 (WebSocket)
+   - 9100 (Prometheus metrics)
+   - 5432 (PostgreSQL)
+   - 6379 (Redis)
+
+5. System user 'datastream' has been created with appropriate permissions:
+   $ sudo useradd -r -s /bin/false datastream
+   $ sudo mkdir -p /opt/datastream && sudo chown datastream:datastream /opt/datastream
+Page 4
+
+Step-by-Step Installation
+
+Follow these steps to install DataStream Platform:
+
+Step 1: Download the distribution package
+   $ curl -LO https://releases.datastream.io/v3.2/datastream-3.2.tar.gz
+   $ sha256sum datastream-3.2.tar.gz
+   Expected: a1b2c3d4e5f6...
+
+Step 2: Extract and enter the directory
+   $ tar xzf datastream-3.2.tar.gz
+   $ cd datastream-3.2
+
+Step 3: Run the installer
+   $ sudo ./install.sh --prefix=/opt/datastream --user=datastream
+
+Step 4: Initialize the database schema
+   $ datastream-ctl db migrate --target=latest
+
+Step 5: Start the services
+   $ sudo systemctl enable datastream
+   $ sudo systemctl start datastream
+
+Step 6: Verify the installation
+   $ datastream-ctl status
+   Expected output:
+     DataStream Platform v3.2
+     Status: Running
+     API: http://localhost:8080
+     WebSocket: ws://localhost:9090
+     Uptime: 0d 0h 0m
+Page 5
+
+Post-Installation Verification
+
+After installation, perform the following verification steps:
+
+1. Health check endpoint:
+   $ curl http://localhost:8080/health
+   Response:
+   {
+     "status": "healthy",
+     "version": "3.2.0",
+     "uptime_seconds": 42,
+     "components": {
+       "database": "connected",
+       "redis": "connected",
+       "kafka": "not_configured"
+     }
+   }
+
+2. Create a test data pipeline:
+   $ curl -X POST http://localhost:8080/api/v1/pipelines \
+     -H "Content-Type: application/json" \
+     -d '{"name": "test-pipeline", "source": "stdin", "sink": "stdout"}'
+
+3. Send test data through the pipeline:
+   $ echo '{"event": "test"}' | datastream-ctl push --pipeline=test-pipeline
+
+4. Check the metrics endpoint:
+   $ curl http://localhost:9100/metrics | grep datastream_events_total
+Page 6
+
+CONFIGURATION
+
+Environment Variables
+
+DataStream is configured primarily through environment variables. These can
+be set in /etc/datastream/datastream.env or via your container orchestrator.
+
+Core configuration variables:
+
+DS_LISTEN_ADDR=0.0.0.0:8080        # API listen address
+DS_TLS_ENABLED=false                 # Enable TLS for REST API
+DS_TLS_CERT=/etc/datastream/tls.crt # TLS certificate path
+DS_TLS_KEY=/etc/datastream/tls.key  # TLS private key path
+DS_LOG_LEVEL=info                    # Logging level (debug|info|warn|error)
+DS_LOG_FORMAT=json                   # Log format (json|text)
+DS_WORKERS=auto                      # Number of worker threads (auto = 2x CPU)
+DS_MAX_CONNECTIONS=10000             # Maximum concurrent connections
+DS_REQUEST_TIMEOUT=30s               # Request timeout
+DS_SHUTDOWN_TIMEOUT=60s              # Graceful shutdown timeout
+
+Performance tuning variables:
+
+DS_BUFFER_SIZE=65536                 # Internal buffer size in bytes
+DS_BATCH_SIZE=1000                   # Events per batch for bulk operations
+DS_FLUSH_INTERVAL=100ms              # Maximum time before flushing a batch
+DS_COMPRESSION=snappy                # Compression algorithm (none|snappy|lz4|zstd)
+Page 7
+
+Database Configuration
+
+DataStream requires PostgreSQL for metadata storage. Configure the connection
+using the following environment variables:
+
+DS_DB_HOST=localhost
+DS_DB_PORT=5432
+DS_DB_NAME=datastream_meta
+DS_DB_USER=datastream
+DS_DB_PASSWORD=<secure-password>
+DS_DB_SSL_MODE=require               # disable|require|verify-ca|verify-full
+DS_DB_MAX_CONNECTIONS=50
+DS_DB_IDLE_TIMEOUT=300s
+
+Connection pool settings:
+
+The connection pool is automatically sized based on DS_DB_MAX_CONNECTIONS.
+For production deployments, we recommend:
+- Single node: DS_DB_MAX_CONNECTIONS=50
+- 3-node cluster: DS_DB_MAX_CONNECTIONS=30 per node
+- Large cluster (5+ nodes): DS_DB_MAX_CONNECTIONS=20 per node
+
+Database maintenance:
+
+DataStream includes an auto-vacuum process that runs daily at 03:00 UTC.
+To adjust the schedule:
+  DS_DB_VACUUM_SCHEDULE="0 3 * * *"    # Cron expression
+
+For manual maintenance:
+  $ datastream-ctl db vacuum
+  $ datastream-ctl db analyze
+Page 8
+
+Authentication Setup
+
+DataStream supports multiple authentication methods:
+
+1. API Key Authentication (default)
+   Generate an API key:
+   $ datastream-ctl auth create-key --name="my-app" --role=admin
+   Output: ds_key_abc123...
+
+   Use in requests:
+   $ curl -H "Authorization: Bearer ds_key_abc123" http://localhost:8080/api/v1/pipelines
+
+2. LDAP Authentication
+   DS_AUTH_METHOD=ldap
+   DS_LDAP_URL=ldaps://ldap.example.com:636
+   DS_LDAP_BASE_DN=ou=users,dc=example,dc=com
+   DS_LDAP_BIND_DN=cn=datastream,ou=services,dc=example,dc=com
+   DS_LDAP_BIND_PASSWORD=<ldap-password>
+   DS_LDAP_USER_FILTER=(uid={username})
+
+3. SAML 2.0 SSO
+   DS_AUTH_METHOD=saml
+   DS_SAML_IDP_METADATA_URL=https://idp.example.com/metadata
+   DS_SAML_SP_ENTITY_ID=https://datastream.example.com
+   DS_SAML_ACS_URL=https://datastream.example.com/auth/saml/callback
+
+Role-based access control levels:
+- viewer: Read-only access to pipelines and metrics
+- operator: Start/stop pipelines, view logs
+- admin: Full access including user management
+- superadmin: System-level access including configuration changes
+Page 9
+
+API REFERENCE
+
+REST Endpoints
+
+Base URL: http://localhost:8080/api/v1
+
+Pipeline Management:
+  GET    /pipelines              List all pipelines
+  POST   /pipelines              Create a new pipeline
+  GET    /pipelines/{id}         Get pipeline details
+  PUT    /pipelines/{id}         Update pipeline configuration
+  DELETE /pipelines/{id}         Delete a pipeline
+  POST   /pipelines/{id}/start   Start a pipeline
+  POST   /pipelines/{id}/stop    Stop a pipeline
+
+Data Operations:
+  POST   /data/push              Push events to a pipeline
+  POST   /data/batch             Push batch of events
+  GET    /data/query             Query processed data
+
+Monitoring:
+  GET    /health                 System health check
+  GET    /metrics                Prometheus-format metrics
+  GET    /status                 Detailed system status
+
+Administration:
+  GET    /admin/config           View current configuration
+  PUT    /admin/config           Update configuration
+  GET    /admin/users            List users
+  POST   /admin/users            Create user
+  DELETE /admin/users/{id}       Delete user
+
+All endpoints return JSON. Error responses follow RFC 7807 Problem Details format.
+See the Error Codes section for a complete list of error responses.
+Page 10
+
+WebSocket API
+
+Connect to the WebSocket endpoint for real-time data streaming:
+
+  ws://localhost:9090/ws/v1/stream
+
+Connection example (JavaScript):
+  const ws = new WebSocket('ws://localhost:9090/ws/v1/stream');
+  ws.onopen = () => {
+    ws.send(JSON.stringify({
+      action: 'subscribe',
+      pipeline: 'my-pipeline',
+      filter: { event_type: 'user_action' }
+    }));
+  };
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    console.log('Received:', data);
+  };
+
+Supported WebSocket actions:
+- subscribe: Subscribe to a pipeline's output stream
+- unsubscribe: Unsubscribe from a pipeline
+- ping: Keep-alive heartbeat (server responds with pong)
+- query: Execute a one-time query and receive results
+
+The WebSocket connection supports automatic reconnection. If the connection
+drops, the client should implement exponential backoff with a maximum delay
+of 30 seconds. The server maintains a 5-minute message buffer for reconnecting
+clients, identified by a client_id parameter.
+
+Maximum message size: 1 MB
+Maximum concurrent subscriptions per connection: 50
+Heartbeat interval: 30 seconds (configurable via DS_WS_HEARTBEAT_INTERVAL)
+Page 11
+
+Error Codes
+
+DataStream uses standard HTTP status codes combined with application-specific
+error codes for detailed error reporting.
+
++--------+---------------------------+-------------------------------------+
+| Code   | Error                     | Description                         |
++--------+---------------------------+-------------------------------------+
+| DS-001 | PIPELINE_NOT_FOUND        | The specified pipeline does not exist|
+| DS-002 | PIPELINE_ALREADY_EXISTS   | A pipeline with this name exists     |
+| DS-003 | PIPELINE_NOT_RUNNING      | Pipeline must be started first       |
+| DS-004 | PIPELINE_ALREADY_RUNNING  | Pipeline is already in running state |
+| DS-010 | INVALID_CONFIGURATION     | Configuration validation failed      |
+| DS-011 | MISSING_REQUIRED_FIELD    | A required field is missing          |
+| DS-020 | AUTHENTICATION_FAILED     | Invalid or expired credentials       |
+| DS-021 | AUTHORIZATION_FAILED      | Insufficient permissions             |
+| DS-030 | RATE_LIMIT_EXCEEDED       | Too many requests                    |
+| DS-040 | INTERNAL_ERROR            | Unexpected server error              |
+| DS-041 | DATABASE_ERROR            | Database connection or query failure |
+| DS-042 | UPSTREAM_TIMEOUT          | Upstream service timed out           |
++--------+---------------------------+-------------------------------------+
+
+Error response format (RFC 7807):
+{
+  "type": "https://docs.datastream.io/errors/DS-001",
+  "title": "Pipeline Not Found",
+  "status": 404,
+  "detail": "Pipeline 'my-pipeline' does not exist",
+  "instance": "/api/v1/pipelines/my-pipeline"
+}
+Page 12
+
+TROUBLESHOOTING
+
+Common Issues
+
+1. Service fails to start
+   Symptom: systemctl status datastream shows "failed"
+   Solution: Check logs with journalctl -u datastream -n 50
+   Common causes:
+   - Port already in use (check with ss -tlnp | grep 8080)
+   - Database unreachable (verify PostgreSQL connection)
+   - Insufficient file descriptors (increase with ulimit -n 65536)
+
+2. High memory usage
+   Symptom: RSS memory exceeds expected limits
+   Solution: Adjust DS_BUFFER_SIZE and DS_MAX_CONNECTIONS
+   Monitor with: datastream-ctl stats --memory
+
+3. Events being dropped
+   Symptom: Input count exceeds output count in metrics
+   Solution: Check backpressure settings and sink throughput
+   Enable debug logging: DS_LOG_LEVEL=debug
+
+4. TLS handshake failures
+   Symptom: "tls: bad certificate" in logs
+   Solution: Verify certificate chain is complete
+   Test with: openssl s_client -connect localhost:8443
+
+5. Slow query performance
+   Symptom: /data/query responses exceed DS_REQUEST_TIMEOUT
+   Solution: Add indexes, reduce query scope, increase timeout
+Page 13
+
+Log Analysis
+
+DataStream produces structured JSON logs. Key log fields:
+
+- level: Log severity (debug, info, warn, error)
+- msg: Human-readable message
+- component: System component that generated the log
+- pipeline_id: Associated pipeline (if applicable)
+- request_id: Unique request identifier for tracing
+- duration_ms: Operation duration in milliseconds
+- error: Error details (for warn and error levels)
+
+Useful log queries with jq:
+
+  # Find all errors in the last hour
+  journalctl -u datastream --since "1 hour ago" -o cat | \
+    jq 'select(.level == "error")'
+
+  # Track a specific request
+  journalctl -u datastream -o cat | \
+    jq 'select(.request_id == "req-abc123")'
+
+  # Find slow operations (>1 second)
+  journalctl -u datastream -o cat | \
+    jq 'select(.duration_ms > 1000)'
+
+  # Count errors by component
+  journalctl -u datastream --since today -o cat | \
+    jq -r 'select(.level == "error") | .component' | sort | uniq -c | sort -rn
+
+Log rotation is handled by systemd-journald. For custom log shipping,
+configure DS_LOG_OUTPUT=file and DS_LOG_FILE=/var/log/datastream/app.log.
+Page 14
+
+Performance Tuning
+
+Optimize DataStream for your workload with these tuning parameters:
+
+1. Throughput optimization:
+   - Increase DS_BATCH_SIZE to 5000-10000 for high-volume pipelines
+   - Set DS_COMPRESSION=lz4 for best throughput-to-compression ratio
+   - Use DS_WORKERS=auto (defaults to 2x CPU cores)
+
+2. Latency optimization:
+   - Decrease DS_FLUSH_INTERVAL to 10ms for sub-100ms end-to-end latency
+   - Set DS_BATCH_SIZE=1 for single-event processing (lower throughput)
+   - Enable DS_ZERO_COPY=true on Linux for reduced memory copies
+
+3. Memory optimization:
+   - Reduce DS_BUFFER_SIZE to 16384 for memory-constrained environments
+   - Set DS_MAX_CONNECTIONS appropriately (each connection uses ~64KB)
+   - Enable DS_OFFLOAD_TO_DISK=true to spill buffers to disk under pressure
+
+4. Connection pool tuning:
+   - DS_DB_MAX_CONNECTIONS: Match to expected concurrent query load
+   - DS_DB_IDLE_TIMEOUT: Set to 60s for bursty workloads
+   - DS_REDIS_POOL_SIZE: Default 10, increase for high cache hit rates
+
+Benchmark your configuration:
+  $ datastream-ctl benchmark --events=100000 --concurrency=100
+  Results:
+    Throughput: 45,230 events/sec
+    P50 latency: 2.1ms
+    P99 latency: 12.4ms
+    Memory peak: 512MB
+Page 15
+
+APPENDIX
+
+Glossary
+
+- Pipeline: A configured data flow from source to sink with optional transformations
+- Source: Input connector (Kafka, HTTP, file, stdin)
+- Sink: Output connector (database, HTTP, file, stdout)
+- Transform: Data manipulation step within a pipeline
+- Backpressure: Flow control mechanism to prevent buffer overflow
+- Dead letter queue (DLQ): Storage for events that failed processing
+- Schema registry: Central repository for event schema definitions
+- Partition: Logical division of a data stream for parallel processing
+
+Changelog
+
+Version 3.2.0 (2024-12-01):
+- Added WebSocket API for real-time streaming
+- Improved batch processing throughput by 40%
+- Added SAML 2.0 SSO support
+- Fixed memory leak in long-running pipelines (DS-2024-0893)
+- Updated PostgreSQL driver to support version 16
+
+Version 3.1.0 (2024-06-15):
+- Added support for Apache Kafka 3.6
+- Introduced pipeline templates
+- Added Prometheus metrics endpoint
+- Performance improvements for large batch operations
+- Security fix for API key validation (CVE-2024-XXXX)
+
+Version 3.0.0 (2024-01-10):
+- Major architecture rewrite for horizontal scaling
+- New REST API (v1) with breaking changes from v0
+- Added RBAC with LDAP integration
+- Removed legacy XML configuration format
