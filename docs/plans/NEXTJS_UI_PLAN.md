@@ -1,29 +1,48 @@
 # Next.js 15 UI for Vectorless RAG System
 
 **Date:** February 12, 2026
-**Status:** PLANNING
+**Last Updated:** February 12, 2026 (Chat-first revision)
+**Status:** WEEK 1-2 COMPLETE, WEEK 3-4 READY
 **Backend:** FastAPI (Phase 1-5 COMPLETE, 439/439 tests passing)
 **Frontend:** Next.js 15 + React 19 + shadcn/ui
+**Research Reference:** `docs/research/2026-02-12-pageindex-cookbook-patterns.md`
+
+---
+
+## 🎯 Key Update: Chat-First Architecture (Week 3-4 Revised)
+
+This plan has been updated to incorporate **chat-first streaming patterns** from the PageIndex cookbook, replacing the original form-based query interface with a conversational design.
+
+**What Changed:**
+- ❌ **REMOVED**: Query form → Submit → Results page
+- ✅ **ADDED**: Chat interface with real-time streaming
+- ✅ **ADDED**: Transparent reasoning display ("Let me check...")
+- ✅ **ADDED**: Multi-turn conversation context
+- ✅ **ADDED**: Page citations with click navigation
+- ✅ **ADDED**: Multi-document chat support
+
+**Inspired By:** PageIndex Chat (https://chat.pageindex.ai/)
 
 ---
 
 ## Table of Contents
 
 1. [Architecture Overview](#1-architecture-overview)
-2. [Technology Stack](#2-technology-stack)
-3. [Vercel Patterns Integration](#3-vercel-patterns-integration)
-4. [Project Structure](#4-project-structure)
-5. [Core Features](#5-core-features)
-6. [Component Architecture](#6-component-architecture)
-7. [Backend Integration Strategy](#7-backend-integration-strategy)
-8. [Real-Time Streaming](#8-real-time-streaming)
-9. [State Management](#9-state-management)
-10. [Testing Strategy](#10-testing-strategy)
-11. [Build Phases](#11-build-phases)
-12. [Performance Targets](#12-performance-targets)
-13. [Deployment Strategy](#13-deployment-strategy)
-14. [Memory Notes (For Workflow-Final Persistence)](#14-memory-notes-for-workflow-final-persistence)
-15. [Router Contract](#15-router-contract)
+2. [PageIndex UX Patterns](#2-pageindex-ux-patterns)
+3. [Technology Stack](#3-technology-stack)
+4. [Vercel Patterns Integration](#4-vercel-patterns-integration)
+5. [Project Structure](#5-project-structure)
+6. [Core Features](#6-core-features)
+7. [Component Architecture](#7-component-architecture)
+8. [Backend Integration Strategy](#8-backend-integration-strategy)
+9. [Real-Time Streaming](#9-real-time-streaming)
+10. [State Management](#10-state-management)
+11. [Testing Strategy](#11-testing-strategy)
+12. [Build Phases](#12-build-phases)
+13. [Performance Targets](#13-performance-targets)
+14. [Deployment Strategy](#14-deployment-strategy)
+15. [Memory Notes (For Workflow-Final Persistence)](#15-memory-notes-for-workflow-final-persistence)
+16. [Router Contract](#16-router-contract)
 
 ---
 
@@ -78,7 +97,132 @@ Client Components ("use client"):
 
 ---
 
-## 2. Technology Stack
+## 2. PageIndex UX Patterns
+
+### 2.1 Research Source
+
+**Reference:** `docs/research/2026-02-12-pageindex-cookbook-patterns.md`
+**Cookbook Location:** `/reference/PageIndex/cookbook/`
+**Live Demo:** https://chat.pageindex.ai/
+
+### 2.2 Core UX Patterns Adopted
+
+#### Pattern 1: Transparent Reasoning Process
+
+**Why:** Builds user trust by showing the AI's thinking process.
+
+**Implementation:**
+```
+User: "What is the revenue?"
+
+AI Response (streamed):
+→ "Let me check document structure..."
+   [metadata: {"doc_name": "report.pdf"}]
+→ "Now looking at pages 3-5..."
+   [metadata: {"pages": "3-5"}]
+→ "Perfect! The revenue for Q4 2024 is $2.5M."
+   [citation: Page 3]
+```
+
+**Components:**
+- `ThinkingProcess.tsx` - Displays reasoning steps in muted text
+- `metadata` chunks shown as info badges
+
+#### Pattern 2: Real-Time Streaming (Not Wait-Then-Show)
+
+**Why:** Feels like human expert walking through document, not loading spinner.
+
+**Implementation:**
+- SSE chunks appear immediately as they arrive
+- Word-by-word streaming (not sentence-by-sentence)
+- Thinking steps interleaved with content
+- No "loading..." state - show partial content
+
+**Hook:** `useChatStream()` with chunk type routing
+
+#### Pattern 3: Multi-Turn Conversational Context
+
+**Why:** Users naturally ask follow-up questions.
+
+**Implementation:**
+```typescript
+// Turn 1
+messages: [{ role: "user", content: "What is revenue?" }]
+
+// Turn 2 (maintains context)
+messages: [
+  { role: "user", content: "What is revenue?" },
+  { role: "assistant", content: "Revenue is $2.5M" },
+  { role: "user", content: "What about Q4?" }, // No need to repeat context
+]
+```
+
+**Backend:** Session stores full conversation history
+**Frontend:** MessageList displays all turns in chronological order
+
+#### Pattern 4: Page Citations (Trust Through Verification)
+
+**Why:** Users want to verify sources, not trust blindly.
+
+**Implementation:**
+- Citations embedded in answer: "You can find this on Page 3"
+- Clickable badges link to document viewer
+- Cite page number + snippet of text
+
+**Component:** `PageCitation.tsx`
+```tsx
+<PageCitation
+  page={3}
+  text="Q4 revenue: $2.5M"
+  onClick={() => navigateToDocument(docId, page: 3)}
+/>
+```
+
+#### Pattern 5: Flexible Output Modes
+
+**Why:** Different use cases need different formats.
+
+**Modes:**
+1. **Natural Language (Default)**: Conversational answer with citations
+2. **JSON Retrieval (Prompt-Driven)**: Structured data for downstream processing
+
+**Implementation:**
+```typescript
+// Mode A: Natural language
+sendMessage("What are the conclusions?", [docId])
+// Returns: "The main conclusion is..."
+
+// Mode B: JSON retrieval (via prompt)
+const prompt = `
+Your job is to retrieve raw relevant content from the document.
+Query: ${userQuery}
+Return in JSON format:
+[
+  {"page": <number>, "content": "<raw text>"},
+  ...
+]
+`
+sendMessage(prompt, [docId])
+// Returns: [{"page": 3, "content": "..."}]
+```
+
+### 2.3 Design Philosophy
+
+**From PageIndex:**
+- **"Show, don't hide"**: Expose reasoning, don't black-box it
+- **"Stream, don't wait"**: Real-time feedback > loading spinners
+- **"Cite, don't assert"**: Every claim backed by page reference
+- **"Converse, don't query"**: Multi-turn dialogue > one-shot Q&A
+
+**Applied to Our UI:**
+- Chat-first interface (not form-based)
+- Thinking steps visible by default (collapsible)
+- Citations integrated into answer flow
+- Multi-document support from day 1
+
+---
+
+## 3. Technology Stack
 
 ### 2.1 Core Dependencies
 
@@ -124,7 +268,7 @@ Client Components ("use client"):
 }
 ```
 
-### 2.2 Backend API Base URL
+### 3.2 Backend API Base URL
 
 ```typescript
 // lib/config.ts
@@ -145,11 +289,11 @@ export const API_CONFIG = {
 
 ---
 
-## 3. Vercel Patterns Integration
+## 4. Vercel Patterns Integration
 
 This section maps **45 Vercel best practices** to our UI implementation. Each component/feature references the specific pattern(s) it follows.
 
-### 3.1 Critical Patterns (MUST IMPLEMENT)
+### 4.1 Critical Patterns (MUST IMPLEMENT)
 
 #### Pattern 1.1: Defer Await Until Needed
 **Applied to:** Document list loading, session history
@@ -327,7 +471,7 @@ export const MessageItem = memo(function MessageItem({ message }: Props) {
 // Parent re-renders won't re-render MessageItem if message prop unchanged
 ```
 
-### 3.2 High-Impact Patterns (SHOULD IMPLEMENT)
+### 4.2 High-Impact Patterns (SHOULD IMPLEMENT)
 
 #### Pattern 3.3: Parallel Data Fetching with Component Composition
 **Applied to:** Document detail page
@@ -441,7 +585,7 @@ function Message({ content }: Props) {
 }
 ```
 
-### 3.3 Medium-Impact Patterns (NICE TO HAVE)
+### 4.3 Medium-Impact Patterns (NICE TO HAVE)
 
 #### Pattern 2.5: Preload Based on User Intent
 **Applied to:** Document hover preloading
@@ -493,7 +637,7 @@ function useSessionUpdates(sessionId: string) {
 
 ---
 
-## 4. Project Structure
+## 5. Project Structure
 
 ```
 frontend/                          # Next.js app (separate from backend)
@@ -512,10 +656,10 @@ frontend/                          # Next.js app (separate from backend)
           page.tsx                 # Document detail (RSC)
           layout.tsx               # Document detail layout
 
-      query/
-        page.tsx                   # Query interface
+      chat/
+        page.tsx                   # Chat interface (new session)
         [sessionId]/
-          page.tsx                 # Session detail
+          page.tsx                 # Resume existing conversation
 
       sessions/
         page.tsx                   # Session list
@@ -523,8 +667,9 @@ frontend/                          # Next.js app (separate from backend)
           page.tsx                 # Session detail
 
     api/
-      stream-query/
-        route.ts                   # SSE streaming endpoint for queries
+      chat/
+        stream/
+          route.ts                 # SSE streaming endpoint for chat
 
     layout.tsx                     # Root layout
     page.tsx                       # Landing page
@@ -546,11 +691,16 @@ frontend/                          # Next.js app (separate from backend)
       document-upload-form.tsx     # Client: file input
       pdf-viewer.tsx               # Client: dynamic import (Pattern 2.4)
 
-    query/
-      query-input.tsx              # Client: form handling
-      message-list.tsx             # Client: streaming updates
+    chat/
+      chat-client.tsx              # Client: main container
+      message-list.tsx             # Client: scrollable history
       message-item.tsx             # Client: memoized (Pattern 5.2)
-      streaming-message.tsx        # Client: SSE consumer
+      chat-input.tsx               # Client: input with send
+      thinking-process.tsx         # Client: reasoning steps display
+      page-citation.tsx            # Client: clickable page refs
+      document-selector.tsx        # Client: multi-doc picker
+      message-skeleton.tsx         # Client: streaming placeholder
+      conversation-export.tsx      # Client: export as JSON/MD
 
     sessions/
       session-card.tsx
@@ -564,8 +714,10 @@ frontend/                          # Next.js app (separate from backend)
 
   hooks/
     use-documents.ts               # TanStack Query: documents
-    use-query-stream.ts            # SSE streaming hook
+    use-chat-stream.ts             # SSE streaming hook
+    use-scroll-anchor.ts           # Auto-scroll to bottom
     use-sessions.ts                # TanStack Query: sessions
+    use-conversation-export.ts     # Export conversation logic
     use-toast.ts                   # Toast notifications
 
   lib/
@@ -599,7 +751,7 @@ frontend/                          # Next.js app (separate from backend)
   package.json
 ```
 
-### 4.1 File Naming Conventions
+### 5.1 File Naming Conventions
 
 - **Server Components**: `component-name.tsx` (default)
 - **Client Components**: `component-name.tsx` with `"use client"` directive
@@ -609,9 +761,9 @@ frontend/                          # Next.js app (separate from backend)
 
 ---
 
-## 5. Core Features
+## 6. Core Features
 
-### 5.1 Feature: Document Upload
+### 6.1 Feature: Document Upload
 
 **User Story:** As a user, I can upload a PDF or Markdown file and track ingestion progress.
 
@@ -697,66 +849,156 @@ export function DocumentUploadForm() {
 }
 ```
 
-### 5.2 Feature: Query/Chat Interface
+### 6.2 Feature: Chat Interface with Streaming
 
-**User Story:** As a user, I can ask questions about uploaded documents and receive streaming responses.
+**User Story:** As a user, I can have a conversation with my documents through a chat interface that shows real-time streaming responses with transparent reasoning.
 
 **Components:**
-- `query/query-input.tsx` (Client)
-- `query/message-list.tsx` (Client)
-- `query/streaming-message.tsx` (Client)
+- `chat/chat-client.tsx` (Client) - Main chat container
+- `chat/message-list.tsx` (Client) - Scrollable message history
+- `chat/chat-input.tsx` (Client) - Message input with document selector
+- `chat/message-item.tsx` (Client) - Individual message display (memoized)
+- `chat/thinking-process.tsx` (Client) - Shows LLM reasoning steps
+- `chat/page-citation.tsx` (Client) - Clickable page references
 
 **Vercel Patterns Applied:**
 - **Pattern 4.1**: Deduplicate scroll event listeners
 - **Pattern 5.2**: Memoize message items
 - **Pattern 5.7**: Use transitions for input debouncing
+- **Pattern 6.3**: Hoist static JSX for avatars
 
 **Flow:**
 ```
-1. User types query, selects document
-2. POST /api/query with documentId + query
-3. Backend streams response via SSE
-4. Client appends chunks to message content
-5. Display retrieval trace (nodes visited, reasoning path)
+1. User selects document(s) to chat with
+2. User types message in chat input
+3. POST /api/chat/stream with sessionId + message + docIds
+4. Backend streams response via SSE with multiple chunk types:
+   - type: 'thinking' → "Let me check document structure..."
+   - type: 'metadata' → {"doc_name": "report.pdf", "pages": "3-5"}
+   - type: 'content' → Answer text chunks
+   - type: 'citation' → {"page": 3, "text": "..."}
+5. Client renders chunks in real-time:
+   - Thinking steps shown in muted text
+   - Metadata displayed as info badges
+   - Content streamed word-by-word
+   - Citations become clickable links
+6. Conversation history persisted in session
+7. User can ask follow-up questions with full context
 ```
+
+**Key UX Patterns from PageIndex Cookbook:**
+- **Transparent Reasoning**: Show thinking process ("Let me check...", "Now looking at pages...")
+- **Real-time Streaming**: Chunks appear immediately, not wait-then-show-all
+- **Page Citations**: "You can find this on Page 3" with click → document viewer
+- **Multi-turn Context**: Maintains conversation history in messages array
+- **Flexible Output**: Natural language (default) OR JSON retrieval (prompt-driven)
 
 **Implementation:**
 
 ```tsx
-// hooks/use-query-stream.ts
+// hooks/use-chat-stream.ts
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
 
-export function useQueryStream(sessionId: string) {
-  const [messages, setMessages] = useState<Message[]>([])
+interface ChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  thinking?: string[]  // Array of reasoning steps
+  metadata?: Record<string, any>  // Document metadata, pages accessed
+  citations?: Array<{ page: number; text: string }>
+  timestamp: number
+}
+
+interface StreamChunk {
+  type: 'thinking' | 'metadata' | 'content' | 'citation' | 'done' | 'error'
+  content?: string
+  data?: any
+}
+
+export function useChatStream(sessionId: string) {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
   const eventSourceRef = useRef<EventSource | null>(null)
+  const currentMessageRef = useRef<ChatMessage | null>(null)
 
-  const sendQuery = async (query: string, documentId: string) => {
+  const sendMessage = async (message: string, documentIds: string[]) => {
+    // Add user message immediately
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: message,
+      timestamp: Date.now(),
+    }
+    setMessages(prev => [...prev, userMessage])
+
     setIsStreaming(true)
 
     // Close existing stream
     eventSourceRef.current?.close()
 
+    // Initialize assistant message
+    currentMessageRef.current = {
+      id: `assistant-${Date.now()}`,
+      role: 'assistant',
+      content: '',
+      thinking: [],
+      citations: [],
+      timestamp: Date.now(),
+    }
+    setMessages(prev => [...prev, currentMessageRef.current!])
+
     // Open new SSE stream
-    const url = `/api/stream-query?sessionId=${sessionId}&documentId=${documentId}&query=${encodeURIComponent(query)}`
+    const params = new URLSearchParams({
+      sessionId,
+      message,
+      documentIds: documentIds.join(','),
+    })
+    const url = `/api/chat/stream?${params.toString()}`
     const eventSource = new EventSource(url)
     eventSourceRef.current = eventSource
 
-    let currentMessage = { id: Date.now(), role: 'assistant', content: '' }
-    setMessages(prev => [...prev, currentMessage])
-
     eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data)
+      const chunk: StreamChunk = JSON.parse(event.data)
+      const current = currentMessageRef.current!
 
-      if (data.type === 'chunk') {
-        currentMessage.content += data.content
-        setMessages(prev => [...prev.slice(0, -1), { ...currentMessage }])
-      } else if (data.type === 'done') {
-        setIsStreaming(false)
-        eventSource.close()
+      switch (chunk.type) {
+        case 'thinking':
+          // Add thinking step (e.g., "Let me check document structure...")
+          current.thinking = [...(current.thinking || []), chunk.content!]
+          break
+
+        case 'metadata':
+          // Store metadata (doc_name, pages accessed, etc.)
+          current.metadata = { ...current.metadata, ...chunk.data }
+          break
+
+        case 'content':
+          // Append content chunk to message
+          current.content += chunk.content
+          break
+
+        case 'citation':
+          // Add page citation
+          current.citations = [...(current.citations || []), chunk.data]
+          break
+
+        case 'done':
+          setIsStreaming(false)
+          eventSource.close()
+          return
+
+        case 'error':
+          console.error('Stream error:', chunk.content)
+          current.content += '\n\n[Error: ' + chunk.content + ']'
+          setIsStreaming(false)
+          eventSource.close()
+          return
       }
+
+      // Trigger re-render with updated message
+      setMessages(prev => [...prev.slice(0, -1), { ...current }])
     }
 
     eventSource.onerror = () => {
@@ -769,21 +1011,144 @@ export function useQueryStream(sessionId: string) {
     return () => eventSourceRef.current?.close()
   }, [])
 
-  return { messages, isStreaming, sendQuery }
+  return { messages, isStreaming, sendMessage }
 }
 ```
 
 ```tsx
-// app/api/stream-query/route.ts
+// components/chat/chat-client.tsx
+'use client'
+
+import { useState } from 'react'
+import { useChatStream } from '@/hooks/use-chat-stream'
+import { MessageList } from './message-list'
+import { ChatInput } from './chat-input'
+import { DocumentSelector } from './document-selector'
+
+export function ChatClient({ sessionId }: { sessionId: string }) {
+  const [selectedDocIds, setSelectedDocIds] = useState<string[]>([])
+  const { messages, isStreaming, sendMessage } = useChatStream(sessionId)
+
+  const handleSend = (message: string) => {
+    if (!message.trim() || selectedDocIds.length === 0) return
+    sendMessage(message, selectedDocIds)
+  }
+
+  return (
+    <div className="flex flex-col h-screen">
+      <div className="border-b p-4">
+        <DocumentSelector
+          selectedIds={selectedDocIds}
+          onChange={setSelectedDocIds}
+        />
+      </div>
+
+      <MessageList messages={messages} className="flex-1 overflow-y-auto" />
+
+      <ChatInput
+        onSend={handleSend}
+        disabled={isStreaming || selectedDocIds.length === 0}
+        placeholder={
+          selectedDocIds.length === 0
+            ? 'Select a document to start chatting...'
+            : 'Ask a question...'
+        }
+      />
+    </div>
+  )
+}
+```
+
+```tsx
+// components/chat/message-item.tsx (Pattern 5.2: Memoized)
+'use client'
+
+import { memo } from 'react'
+import { ChatMessage } from '@/hooks/use-chat-stream'
+import { ThinkingProcess } from './thinking-process'
+import { PageCitation } from './page-citation'
+
+// Pattern 6.3: Hoist static avatars
+const USER_AVATAR = (
+  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+    <span className="text-white text-sm">U</span>
+  </div>
+)
+
+const ASSISTANT_AVATAR = (
+  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center">
+    <span className="text-white text-sm">AI</span>
+  </div>
+)
+
+export const MessageItem = memo(function MessageItem({
+  message,
+}: {
+  message: ChatMessage
+}) {
+  const isUser = message.role === 'user'
+
+  return (
+    <div className={`flex gap-3 p-4 ${isUser ? 'bg-gray-50' : ''}`}>
+      {isUser ? USER_AVATAR : ASSISTANT_AVATAR}
+
+      <div className="flex-1 space-y-2">
+        {/* Thinking steps (assistant only) */}
+        {!isUser && message.thinking && message.thinking.length > 0 && (
+          <ThinkingProcess steps={message.thinking} />
+        )}
+
+        {/* Main content */}
+        <div className="prose prose-sm">
+          {message.content || <span className="text-gray-400">Thinking...</span>}
+        </div>
+
+        {/* Citations */}
+        {message.citations && message.citations.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2">
+            {message.citations.map((citation, idx) => (
+              <PageCitation
+                key={idx}
+                page={citation.page}
+                text={citation.text}
+                documentId={message.metadata?.doc_id}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Metadata badges */}
+        {message.metadata && (
+          <div className="flex gap-2 text-xs text-gray-500">
+            {message.metadata.doc_name && (
+              <span className="px-2 py-1 bg-gray-100 rounded">
+                {message.metadata.doc_name}
+              </span>
+            )}
+            {message.metadata.pages && (
+              <span className="px-2 py-1 bg-gray-100 rounded">
+                Pages: {message.metadata.pages}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+})
+```
+
+```tsx
+// app/api/chat/stream/route.ts
 import { NextRequest } from 'next/server'
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
-  const query = searchParams.get('query')
-  const documentId = searchParams.get('documentId')
+  const message = searchParams.get('message')
+  const documentIds = searchParams.get('documentIds')?.split(',') || []
   const sessionId = searchParams.get('sessionId')
 
-  if (!query || !documentId) {
+  if (!message || documentIds.length === 0) {
     return new Response('Missing parameters', { status: 400 })
   }
 
@@ -792,27 +1157,44 @@ export async function GET(request: NextRequest) {
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        // Call FastAPI backend
-        const res = await fetch(`${process.env.API_URL}/api/query`, {
+        // Call FastAPI backend chat endpoint
+        const res = await fetch(`${process.env.API_URL}/api/chat/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query, documentId, sessionId }),
+          body: JSON.stringify({
+            message,
+            document_ids: documentIds,
+            session_id: sessionId,
+          }),
         })
 
-        if (!res.ok) throw new Error('Query failed')
+        if (!res.ok) throw new Error('Chat request failed')
         if (!res.body) throw new Error('No response body')
 
         const reader = res.body.getReader()
+        const decoder = new TextDecoder()
 
         while (true) {
           const { done, value } = await reader.read()
           if (done) break
 
-          // Forward chunk to client
-          const chunk = new TextDecoder().decode(value)
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: 'chunk', content: chunk })}\n\n`)
-          )
+          // Backend sends newline-delimited JSON chunks
+          const lines = decoder.decode(value).split('\n')
+
+          for (const line of lines) {
+            if (!line.trim()) continue
+
+            try {
+              const chunk = JSON.parse(line)
+
+              // Forward chunk to client
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
+              )
+            } catch (e) {
+              console.error('Failed to parse chunk:', line)
+            }
+          }
         }
 
         // Signal completion
@@ -822,7 +1204,9 @@ export async function GET(request: NextRequest) {
         controller.close()
       } catch (error) {
         controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`)
+          encoder.encode(
+            `data: ${JSON.stringify({ type: 'error', content: error.message })}\n\n`
+          )
         )
         controller.close()
       }
@@ -839,7 +1223,30 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-### 5.3 Feature: Session History
+**Backend API Contract (FastAPI):**
+
+```python
+# POST /api/chat/stream
+# Request body:
+{
+  "message": "What is the revenue?",
+  "document_ids": ["doc_123"],
+  "session_id": "session_456"  # optional
+}
+
+# Response: Newline-delimited JSON chunks
+{"type": "thinking", "content": "Let me check document structure..."}
+{"type": "metadata", "data": {"doc_name": "report.pdf", "doc_id": "doc_123"}}
+{"type": "thinking", "content": "Now looking at pages 3-5..."}
+{"type": "metadata", "data": {"pages": "3-5"}}
+{"type": "content", "content": "The revenue for Q4 2024 is "}
+{"type": "content", "content": "$2.5 million. "}
+{"type": "citation", "data": {"page": 3, "text": "Q4 revenue: $2.5M"}}
+{"type": "content", "content": "You can find this on Page 3."}
+{"type": "done"}
+```
+
+### 6.3 Feature: Session History
 
 **User Story:** As a user, I can view past conversations with retrieval traces.
 
@@ -880,7 +1287,7 @@ async function SessionList() {
 }
 ```
 
-### 5.4 Feature: Document Library
+### 6.4 Feature: Document Library
 
 **User Story:** As a user, I can browse uploaded documents with filters and search.
 
@@ -929,9 +1336,9 @@ async function DocumentList({ filters }: { filters: DocumentFilters }) {
 
 ---
 
-## 6. Component Architecture
+## 7. Component Architecture
 
-### 6.1 shadcn/ui Components
+### 7.1 shadcn/ui Components
 
 Install shadcn/ui CLI:
 
@@ -945,9 +1352,45 @@ Components to install:
 npx shadcn@latest add button card dialog input textarea
 npx shadcn@latest add dropdown-menu toast tooltip accordion
 npx shadcn@latest add skeleton badge separator progress
+npx shadcn@latest add avatar scroll-area tabs
 ```
 
-### 6.2 Custom Component Patterns
+### 7.2 Chat Component Architecture
+
+**Chat-first design pattern from PageIndex cookbook:**
+
+```
+app/chat/
+├── page.tsx                   # SSR shell with Suspense
+├── [sessionId]/
+│   └── page.tsx               # Resume existing session
+└── layout.tsx                 # Chat layout with document selector
+
+components/chat/
+├── chat-client.tsx            # Main container (Client)
+├── message-list.tsx           # Scrollable history (Client)
+├── message-item.tsx           # Individual message (Client, memoized)
+├── chat-input.tsx             # Input with send button (Client)
+├── thinking-process.tsx       # Shows reasoning steps (Client)
+├── page-citation.tsx          # Clickable page reference (Client)
+├── document-selector.tsx      # Multi-document picker (Client)
+├── message-skeleton.tsx       # Loading state for streaming
+└── conversation-export.tsx    # Export chat as JSON/MD (Client)
+
+hooks/
+├── use-chat-stream.ts         # SSE streaming management
+├── use-scroll-anchor.ts       # Auto-scroll to bottom
+└── use-conversation-export.ts # Export conversation logic
+```
+
+**Key Patterns:**
+- **ChatClient**: Container component, manages session state
+- **MessageList**: Pattern 6.2 (content-visibility) for long lists
+- **MessageItem**: Pattern 5.2 (memoized), Pattern 6.3 (hoisted avatars)
+- **ThinkingProcess**: Collapsible accordion showing reasoning steps
+- **PageCitation**: Click → navigate to document viewer at specific page
+
+### 7.3 Custom Component Patterns
 
 #### Pattern: Server Component with Suspense
 
@@ -998,7 +1441,7 @@ export function DocumentStats({ documentId }: Props) {
 }
 ```
 
-### 6.3 Error Boundaries
+### 7.4 Error Boundaries
 
 ```tsx
 // components/error-boundary.tsx (Client Component)
@@ -1032,9 +1475,9 @@ export class ErrorBoundary extends Component<
 
 ---
 
-## 7. Backend Integration Strategy
+## 8. Backend Integration Strategy
 
-### 7.1 API Client (Client-Side)
+### 8.1 API Client (Client-Side)
 
 ```tsx
 // lib/api/client.ts
@@ -1099,7 +1542,7 @@ class APIClient {
 export const apiClient = new APIClient()
 ```
 
-### 7.2 API Server Functions (Server-Side with React.cache)
+### 8.2 API Server Functions (Server-Side with React.cache)
 
 ```tsx
 // lib/api/server.ts
@@ -1135,7 +1578,7 @@ export const fetchSession = cache(async (sessionId: string) => {
 })
 ```
 
-### 7.3 Type Definitions
+### 8.3 Type Definitions
 
 ```tsx
 // lib/api/types.ts
@@ -1194,9 +1637,9 @@ export interface DocumentFilters {
 
 ---
 
-## 8. Real-Time Streaming
+## 9. Real-Time Streaming
 
-### 8.1 SSE vs WebSocket Decision
+### 9.1 SSE vs WebSocket Decision
 
 **Choice:** Server-Sent Events (SSE)
 
@@ -1207,47 +1650,131 @@ export interface DocumentFilters {
 - Automatic reconnection handling
 - Works over HTTP (no upgrade protocol)
 
-### 8.2 SSE Implementation
+### 9.2 SSE Streaming Architecture
 
 **Pattern 1.5 Applied:** Stream response chunks to client while maintaining UI responsiveness.
 
-```tsx
-// hooks/use-query-stream.ts (detailed in Feature 5.2 above)
+**Chunk Types (from PageIndex pattern):**
+
+```typescript
+// Thinking step (transparent reasoning)
+{ type: 'thinking', content: 'Let me check document structure...' }
+
+// Metadata (document context)
+{ type: 'metadata', data: { doc_name: 'report.pdf', pages: '3-5' } }
+
+// Content chunk (answer text)
+{ type: 'content', content: 'The revenue is ' }
+
+// Citation (page reference)
+{ type: 'citation', data: { page: 3, text: 'Q4 revenue: $2.5M' } }
+
+// Completion signal
+{ type: 'done' }
+
+// Error handling
+{ type: 'error', content: 'Failed to retrieve data' }
 ```
 
-### 8.3 Fallback for SSE Unavailable
+**Implementation:**
 
 ```tsx
-// hooks/use-query-stream.ts
-export function useQueryStream(sessionId: string) {
-  const [messages, setMessages] = useState<Message[]>([])
+// hooks/use-chat-stream.ts (detailed in Feature 5.2 above)
+```
+
+**Key Features:**
+- **Multi-chunk types**: thinking, metadata, content, citation, done, error
+- **Real-time updates**: Each chunk triggers immediate UI update
+- **Transparent reasoning**: Users see thinking process as it happens
+- **Graceful errors**: Errors displayed inline, stream closes cleanly
+- **Auto-reconnect**: EventSource handles reconnection automatically
+
+### 9.3 Auto-scroll and UX Polish
+
+**Auto-scroll behavior (Pattern 4.1: event listener deduplication):**
+
+```tsx
+// hooks/use-scroll-anchor.ts
+import { useEffect, useRef } from 'react'
+
+export function useScrollAnchor() {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  })
+
+  return messagesEndRef
+}
+
+// Usage in MessageList:
+export function MessageList({ messages }: Props) {
+  const messagesEndRef = useScrollAnchor()
+
+  return (
+    <div className="overflow-y-auto">
+      {messages.map(msg => <MessageItem key={msg.id} message={msg} />)}
+      <div ref={messagesEndRef} />
+    </div>
+  )
+}
+```
+
+### 9.4 Fallback for SSE Unavailable
+
+```tsx
+// hooks/use-chat-stream.ts
+export function useChatStream(sessionId: string) {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
 
-  const sendQuery = async (query: string, documentId: string) => {
+  const sendMessage = async (message: string, documentIds: string[]) => {
     // Check if SSE is supported
     if (typeof EventSource === 'undefined') {
       // Fallback: polling
-      return sendQueryWithPolling(query, documentId)
+      return sendMessageWithPolling(message, documentIds)
     }
 
     // Standard SSE implementation
     // ...
   }
 
-  const sendQueryWithPolling = async (query: string, documentId: string) => {
-    // POST query, get sessionId, poll GET /api/sessions/{id} every 1s
-    // ...
+  const sendMessageWithPolling = async (
+    message: string,
+    documentIds: string[]
+  ) => {
+    // POST message, get turnId, poll GET /api/sessions/{sessionId}/turns/{turnId}
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message, documentIds, sessionId }),
+    })
+    const { turnId } = await res.json()
+
+    // Poll for completion
+    const pollInterval = setInterval(async () => {
+      const turn = await fetch(`/api/sessions/${sessionId}/turns/${turnId}`)
+      const data = await turn.json()
+
+      if (data.status === 'completed') {
+        clearInterval(pollInterval)
+        setMessages(prev => [...prev, data.message])
+      }
+    }, 1000)
   }
 
-  return { messages, isStreaming, sendQuery }
+  return { messages, isStreaming, sendMessage }
 }
 ```
 
 ---
 
-## 9. State Management
+## 10. State Management
 
-### 9.1 State Architecture
+### 10.1 State Architecture
 
 **Philosophy:** Minimize client state, leverage server state.
 
@@ -1256,20 +1783,81 @@ Server State (TanStack Query):
   - Documents list
   - Document details
   - Sessions list
-  - Session details
+  - Session details (conversation history)
 
 Client State (React Context):
   - Current session ID
+  - Selected document IDs for chat
   - UI preferences (theme, sidebar collapsed)
   - Toast notifications
 
 Ephemeral State (useState):
-  - Form inputs
+  - Chat input text
   - Modal open/close
-  - Streaming message buffer
+  - Streaming message buffer (thinking steps, citations)
+  - Scroll position
 ```
 
-### 9.2 TanStack Query Setup
+**Conversation Context Management:**
+
+Multi-turn conversations require maintaining message history:
+
+```typescript
+// lib/context/conversation-context.tsx
+'use client'
+
+import { createContext, useContext, useState, ReactNode } from 'react'
+
+interface ConversationContextValue {
+  currentSessionId: string | null
+  setCurrentSessionId: (id: string | null) => void
+  selectedDocumentIds: string[]
+  setSelectedDocumentIds: (ids: string[]) => void
+  messages: ChatMessage[]
+  addMessage: (message: ChatMessage) => void
+  clearMessages: () => void
+}
+
+const ConversationContext = createContext<ConversationContextValue | null>(null)
+
+export function ConversationProvider({ children }: { children: ReactNode }) {
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState<string[]>([])
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+
+  const addMessage = (message: ChatMessage) => {
+    setMessages(prev => [...prev, message])
+  }
+
+  const clearMessages = () => {
+    setMessages([])
+  }
+
+  return (
+    <ConversationContext.Provider
+      value={{
+        currentSessionId,
+        setCurrentSessionId,
+        selectedDocumentIds,
+        setSelectedDocumentIds,
+        messages,
+        addMessage,
+        clearMessages,
+      }}
+    >
+      {children}
+    </ConversationContext.Provider>
+  )
+}
+
+export function useConversation() {
+  const context = useContext(ConversationContext)
+  if (!context) throw new Error('useConversation must be within ConversationProvider')
+  return context
+}
+```
+
+### 10.2 TanStack Query Setup
 
 ```tsx
 // app/providers.tsx
@@ -1303,50 +1891,73 @@ export function Providers({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### 9.3 Context for UI State
+### 10.3 Multi-Turn Context Management
+
+**Key Pattern from PageIndex:** Maintain messages array for conversation context
 
 ```tsx
-// lib/context/session-context.tsx
-'use client'
-
-import { createContext, useContext, useState, ReactNode } from 'react'
-
-interface SessionContextValue {
-  currentSessionId: string | null
-  setCurrentSessionId: (id: string | null) => void
+// Backend API maintains full conversation history
+POST /api/chat/stream
+{
+  "message": "What about Q4?",  // Current question
+  "document_ids": ["doc_123"],
+  "session_id": "session_456",   // Links to conversation history
 }
 
-const SessionContext = createContext<SessionContextValue | null>(null)
+// Backend retrieves previous turns from session:
+// Turn 1: "What is revenue?" → "Revenue is $2.5M"
+// Turn 2: "What about Q4?" → [uses context from Turn 1]
+```
 
-export function SessionProvider({ children }: { children: ReactNode }) {
-  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+**Frontend Context Hydration:**
+
+```tsx
+// app/chat/[sessionId]/page.tsx (Resume existing session)
+async function ChatPage({ params }: { params: { sessionId: string } }) {
+  // Fetch existing session messages
+  const session = await fetchSession(params.sessionId)
 
   return (
-    <SessionContext.Provider value={{ currentSessionId, setCurrentSessionId }}>
-      {children}
-    </SessionContext.Provider>
+    <Suspense fallback={<ChatSkeleton />}>
+      <ChatClient
+        sessionId={params.sessionId}
+        initialMessages={session.turns.map(turn => ({
+          id: turn.id,
+          role: 'user',
+          content: turn.query,
+          timestamp: turn.timestamp,
+        }))}
+      />
+    </Suspense>
   )
 }
+```
 
-export function useSession() {
-  const context = useContext(SessionContext)
-  if (!context) throw new Error('useSession must be within SessionProvider')
-  return context
+**Client-side context tracking:**
+
+```tsx
+// hooks/use-chat-stream.ts
+export function useChatStream(sessionId: string, initialMessages: ChatMessage[] = []) {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages)
+
+  // Messages array maintains full conversation history
+  // Backend receives sessionId to retrieve context server-side
+  // Frontend displays full history in MessageList
 }
 ```
 
 ---
 
-## 10. Testing Strategy
+## 11. Testing Strategy
 
-### 10.1 Test Coverage Goals
+### 11.1 Test Coverage Goals
 
 - **Unit tests**: 80%+ coverage for hooks, utilities
 - **Component tests**: All interactive client components
 - **Integration tests**: Key user flows (upload → query → view)
 - **E2E tests**: Critical paths (full upload-to-answer flow)
 
-### 10.2 Vitest for Unit/Component Tests
+### 11.2 Vitest for Unit/Component Tests
 
 ```tsx
 // tests/components/query-input.test.tsx
@@ -1377,7 +1988,7 @@ describe('QueryInput', () => {
 })
 ```
 
-### 10.3 Playwright for E2E Tests
+### 11.3 Playwright for E2E Tests
 
 ```tsx
 // tests/e2e/upload-and-query.spec.ts
@@ -1407,7 +2018,7 @@ test('upload document and query', async ({ page }) => {
 })
 ```
 
-### 10.4 Testing Checklist
+### 11.4 Testing Checklist
 
 - [ ] Unit tests for all hooks
 - [ ] Component tests for interactive UI
@@ -1421,7 +2032,7 @@ test('upload document and query', async ({ page }) => {
 
 ---
 
-## 11. Build Phases
+## 12. Build Phases
 
 ### Phase 1: Project Setup & Foundation (Week 1)
 
@@ -1476,57 +2087,101 @@ test('upload document and query', async ({ page }) => {
 - **3.3**: Parallel data fetching with component composition
 - **5.6**: Lazy state initialization for file preview
 
-### Phase 3: Query Interface & Streaming (Week 3)
+### Phase 3: Chat Interface & Streaming (Week 3) - REVISED
 
-**Goal:** Build real-time query interface with SSE streaming.
+**Goal:** Build chat-first interface with transparent streaming reasoning (PageIndex pattern).
+
+**Context:** This phase replaces the original query form approach with a conversational chat interface based on PageIndex cookbook patterns.
 
 **Deliverables:**
-- [ ] Query input form with document selector
-- [ ] SSE streaming hook (`use-query-stream.ts`)
-- [ ] Message list with streaming updates
-- [ ] Memoized message items (Pattern 5.2)
-- [ ] Retrieval trace visualization
-- [ ] Session persistence (create new session, continue existing)
+- [ ] Chat page layout (`app/chat/page.tsx`)
+- [ ] ChatClient component with document selector
+- [ ] SSE streaming hook (`use-chat-stream.ts`) with multi-chunk support:
+  - `type: 'thinking'` - reasoning steps
+  - `type: 'metadata'` - document context
+  - `type: 'content'` - answer chunks
+  - `type: 'citation'` - page references
+- [ ] MessageList component with auto-scroll
+- [ ] Memoized MessageItem (Pattern 5.2)
+- [ ] ThinkingProcess component (collapsible accordion)
+- [ ] PageCitation component (clickable links)
+- [ ] ChatInput with multi-document selector
+- [ ] Session creation and persistence
 - [ ] Error handling for streaming failures
-- [ ] Fallback to polling if SSE unavailable
+- [ ] Backend SSE endpoint (`/api/chat/stream`)
 
 **Acceptance Criteria:**
-- Select document, enter query, submit
-- See streaming response chunks in real-time
-- View retrieval trace (nodes visited, reasoning depth)
+- Select one or multiple documents
+- Type message and send
+- See thinking steps appear in real-time ("Let me check...")
+- See metadata badges (doc name, pages accessed)
+- See answer stream word-by-word
+- Click page citation → navigate to document viewer
 - Messages persist in session
-- Can resume session from history
+- Auto-scroll to latest message
+- Can start new conversation or continue existing
 
 **Vercel Patterns Applied:**
 - **1.5**: Streaming with Suspense
 - **4.1**: Deduplicate scroll event listeners
 - **5.2**: Memoize message items
 - **5.7**: Transitions for input debouncing
+- **6.3**: Hoist static JSX (avatars)
 
-### Phase 4: Session History (Week 4)
+**Tests Required:**
+- [ ] SSE stream handles all chunk types correctly
+- [ ] Multi-turn context maintained in session
+- [ ] Thinking steps display/collapse correctly
+- [ ] Citations link to correct document pages
+- [ ] Auto-scroll works during streaming
+- [ ] Error messages display inline
+- [ ] Polling fallback works when SSE unavailable
 
-**Goal:** View and explore past conversations.
+### Phase 4: Multi-Document Chat & Conversation Export (Week 4) - REVISED
+
+**Goal:** Advanced chat features: multi-document conversations and export capabilities.
+
+**Context:** This phase extends Week 3's chat interface with multi-document support and conversation management features.
 
 **Deliverables:**
-- [ ] Session list page (Server Component)
-- [ ] Session detail page with turn timeline
-- [ ] Turn-by-turn retrieval trace viewer
+- [ ] Multi-document selector with visual indicators
+- [ ] Document switcher in chat (add/remove docs mid-conversation)
+- [ ] Conversation export:
+  - Export as Markdown (human-readable)
+  - Export as JSON (structured data)
+  - Include thinking steps and citations
+- [ ] Session history page (list all conversations)
+- [ ] Resume session from history
+- [ ] Delete conversation functionality
 - [ ] Session filters (by document, date range)
-- [ ] Export session as JSON/Markdown
-- [ ] Delete session functionality
+- [ ] Session detail page with full conversation replay
+- [ ] Retrieval trace visualization (tree navigation path)
 - [ ] TanStack Query hooks: `useSessions`, `useSession`
 
 **Acceptance Criteria:**
-- View list of past sessions
-- Click session → see full conversation
-- Expand turn → see retrieval trace
-- Filter sessions by document
-- Export session data
+- Select multiple documents in chat
+- Add/remove documents during conversation
+- Backend retrieves from all selected documents
+- Export conversation maintains formatting
+- View list of past sessions with previews
+- Click session → resume conversation
+- Filter sessions by documents used
+- See retrieval trace for each turn
+- Delete unwanted sessions
 
 **Vercel Patterns Applied:**
 - **1.4**: Promise.all() for parallel session fetching
 - **3.4**: React.cache() for session deduplication
 - **6.2**: content-visibility for long turn lists
+- **7.11**: Use Set/Map for document ID lookups
+
+**Tests Required:**
+- [ ] Multi-document queries retrieve from all docs
+- [ ] Export generates valid Markdown/JSON
+- [ ] Session list filters work correctly
+- [ ] Resume session loads conversation history
+- [ ] Retrieval trace displays tree path correctly
+- [ ] Delete session removes data from backend
 
 ### Phase 5: Polish & Optimization (Week 5)
 
@@ -1581,29 +2236,29 @@ test('upload document and query', async ({ page }) => {
 
 ---
 
-## 12. Performance Targets
+## 13. Performance Targets
 
-### 12.1 Lighthouse Scores (Mobile)
+### 13.1 Lighthouse Scores (Mobile)
 
 - **Performance**: 90+
 - **Accessibility**: 95+
 - **Best Practices**: 100
 - **SEO**: 90+
 
-### 12.2 Core Web Vitals
+### 13.2 Core Web Vitals
 
 - **LCP (Largest Contentful Paint)**: < 2.5s
 - **FID (First Input Delay)**: < 100ms
 - **CLS (Cumulative Layout Shift)**: < 0.1
 
-### 12.3 Bundle Size Targets
+### 13.3 Bundle Size Targets
 
 - **Initial JS bundle**: < 200KB (gzipped)
 - **Total page weight**: < 1MB (first load)
 - **Document list page**: < 150KB JS
 - **Query interface page**: < 180KB JS (including SSE logic)
 
-### 12.4 Runtime Performance
+### 13.4 Runtime Performance
 
 - **Document list render**: < 200ms (50 documents)
 - **Query input latency**: < 50ms (keystroke to UI update)
@@ -1612,9 +2267,9 @@ test('upload document and query', async ({ page }) => {
 
 ---
 
-## 13. Deployment Strategy
+## 14. Deployment Strategy
 
-### 13.1 Vercel Configuration
+### 14.1 Vercel Configuration
 
 ```js
 // vercel.json
@@ -1635,7 +2290,7 @@ test('upload document and query', async ({ page }) => {
 }
 ```
 
-### 13.2 Environment Variables
+### 14.2 Environment Variables
 
 **Local (.env.local):**
 ```bash
@@ -1647,7 +2302,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 NEXT_PUBLIC_API_URL=https://api.yourdomain.com
 ```
 
-### 13.3 Deployment Pipeline
+### 14.3 Deployment Pipeline
 
 ```
 1. Developer pushes to `main` branch
@@ -1659,7 +2314,7 @@ NEXT_PUBLIC_API_URL=https://api.yourdomain.com
 7. Monitor Vercel Analytics + Sentry for errors
 ```
 
-### 13.4 Backend Coordination
+### 14.4 Backend Coordination
 
 **Assumption:** FastAPI backend is deployed separately (not on Vercel).
 
@@ -1686,7 +2341,7 @@ app.add_middleware(
 
 ---
 
-## 14. Memory Notes (For Workflow-Final Persistence)
+## 15. Memory Notes (For Workflow-Final Persistence)
 
 **MEMORY_OWNER: lead**
 
@@ -1723,59 +2378,89 @@ app.add_middleware(
 - Coverage: 80%+
 
 ### Build Phases
-1. Setup & Foundation (Week 1)
-2. Document Management (Week 2)
-3. Query Interface & Streaming (Week 3)
-4. Session History (Week 4)
+1. Setup & Foundation (Week 1) - COMPLETE
+2. Document Management (Week 2) - COMPLETE
+3. Chat Interface & Streaming (Week 3) - REVISED to chat-first pattern
+4. Multi-Document Chat & Export (Week 4) - REVISED with advanced features
 5. Polish & Optimization (Week 5)
 6. Testing & Deployment (Week 6)
 
+### PageIndex Cookbook Integration (Week 3-4)
+- **Chat-first interface** (not form-based query)
+- **Transparent reasoning** (thinking steps visible)
+- **Streaming SSE** (real-time chunks)
+- **Multi-turn context** (conversation history)
+- **Page citations** (clickable references)
+- **Flexible output modes** (natural language + JSON)
+
 ---
 
-## 15. Router Contract
+## 16. Router Contract
 
-### 15.1 Plan Status
+### 16.1 Plan Status
 
 **Plan File:** `docs/plans/NEXTJS_UI_PLAN.md`
 **Status:** READY_FOR_REVIEW
 **Blocking Issues:** None
 **Backend Dependency:** FastAPI (Phases 1-5 COMPLETE, 439/439 tests)
 
-### 15.2 Plan Approval Request
+### 16.2 Plan Update Summary (2026-02-12)
 
-**To:** team-lead
-**From:** planner (UI)
-**Subject:** Next.js UI Plan Ready for Review
+**Update Type:** MAJOR REVISION - Chat-first architecture
+**Research Source:** `docs/research/2026-02-12-pageindex-cookbook-patterns.md`
+**Updated By:** planner agent (Task #2)
 
-**Plan Summary:**
-- Next.js 15 + React 19 UI for vectorless RAG system
-- 45 Vercel patterns referenced throughout plan
-- RSC-first architecture with strategic client components
-- SSE streaming for real-time LLM responses
-- TanStack Query + React.cache() for data fetching
-- 6-week build plan with clear phases and acceptance criteria
+**What Changed:**
 
-**Key Highlights:**
-- **Pattern Integration**: All critical Vercel patterns (1.1, 1.4, 1.5, 2.1, 2.4, 3.4, 4.2, 5.2) explicitly referenced
-- **Performance First**: Bundle size < 200KB, LCP < 2.5s, Lighthouse 90+
-- **Backend Integration**: Comprehensive strategy for FastAPI integration (REST + SSE)
-- **Testing Strategy**: 80%+ coverage with Vitest + Playwright
-- **Deployment**: Vercel-optimized with edge runtime
+1. **Section 5.2 (Core Features)** - REVISED
+   - Replaced query form pattern with chat interface
+   - Added multi-chunk SSE streaming (thinking, metadata, content, citation)
+   - Added PageIndex-inspired UX patterns
 
-**Approval Needed:**
-- [ ] Architecture approved (RSC vs client component boundaries)
-- [ ] Vercel patterns sufficiently integrated
-- [ ] Backend integration strategy validated
-- [ ] Build phases realistic (6 weeks)
-- [ ] Performance targets achievable
+2. **Section 6 (Component Architecture)** - EXPANDED
+   - New chat component structure
+   - Added: ChatClient, ThinkingProcess, PageCitation, DocumentSelector
+   - Updated: MessageList, MessageItem with streaming support
 
-**Next Steps After Approval:**
-1. Spawn builder agent with Week 1 tasks
-2. Update memory (activeContext.md) with UI phase start
-3. Begin Phase 1: Project Setup & Foundation
+3. **Section 8 (Real-Time Streaming)** - ENHANCED
+   - Multi-chunk type SSE protocol defined
+   - Transparent reasoning display pattern
+   - Auto-scroll behavior added
+
+4. **Section 9 (State Management)** - EXPANDED
+   - Added conversation context management
+   - Multi-turn message history tracking
+   - Session hydration for resumed conversations
+
+5. **Section 11 (Build Phases)** - REDESIGNED
+   - **Week 3 (REVISED)**: Chat Interface & Streaming (was: Query Form)
+     - Chat-first UI with streaming reasoning
+     - ThinkingProcess, PageCitation components
+     - Multi-chunk SSE implementation
+   - **Week 4 (REVISED)**: Multi-Document Chat & Export (was: Session History)
+     - Multi-document selector
+     - Conversation export (MD/JSON)
+     - Session management
+
+**Key Patterns Added:**
+- Transparent reasoning display (thinking steps)
+- Real-time streaming chunks (not wait-then-show)
+- Page citations with click navigation
+- Multi-turn context preservation
+- Flexible output modes (natural language + JSON)
+
+**Weeks 1-2 Status:**
+- Week 1: Foundation - COMPLETE (20 tests passing)
+- Week 2: Document Management - COMPLETE (64 tests passing)
+- NO CHANGES to Weeks 1-2 (already built and verified)
+
+**Backend API Contract Added:**
+- `POST /api/chat/stream` endpoint specification
+- Newline-delimited JSON chunk protocol
+- Multi-chunk types: thinking, metadata, content, citation, done, error
 
 ---
 
-**Plan Status:** ✅ COMPLETE
+**Plan Status:** ✅ UPDATED
 **Task 2:** ✅ COMPLETED
-**Awaiting:** Plan approval from team-lead
+**Status:** READY FOR WEEK 3 IMPLEMENTATION

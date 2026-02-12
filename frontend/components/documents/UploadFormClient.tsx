@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { useUploadDocument } from '@/lib/hooks/useDocuments'
 import { documentUploadSchema, sanitizeFilename } from '@/lib/validation/document'
 import type { DocumentUploadInput } from '@/lib/validation/document'
+import { toast } from '@/lib/hooks/use-toast'
 
 interface UploadFormClientProps {
   acceptedExtensions: string
@@ -51,6 +52,17 @@ export function UploadFormClient({ acceptedExtensions }: UploadFormClientProps) 
       onSuccess: () => {
         reset()
         setSelectedFile(null)
+        toast({
+          title: 'Upload successful',
+          description: 'Your document is being processed.',
+        })
+      },
+      onError: (error) => {
+        toast({
+          variant: 'destructive',
+          title: 'Upload failed',
+          description: error.message || 'Could not upload document. Please try again.',
+        })
       },
     })
   }
@@ -119,7 +131,8 @@ export function UploadFormClient({ acceptedExtensions }: UploadFormClientProps) 
       <button
         type="submit"
         disabled={uploadMutation.isPending || !selectedFile}
-        className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
+        aria-disabled={uploadMutation.isPending || !selectedFile}
+        className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
       >
         {uploadMutation.isPending ? 'Uploading...' : 'Upload Document'}
       </button>

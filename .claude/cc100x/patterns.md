@@ -34,6 +34,31 @@
 - [ui-week2-verifier] TanStack Query dev server startup lag: use sleep 8+ before curl check (server takes ~8s to become accessible)
 - [ui-week2-verifier] ESLint warnings (unused vars) are non-blocking: exit code 0, but should fix for clean DX
 - [ui-week2-verifier] Vercel patterns are context-dependent: parallel fetching (3.3) not needed for single-resource pages
+- [ui-week4] Promise in useEffect: Always add .catch() handler and set error state for UI feedback (null state for loading)
+- [ui-week4] Throttle cleanup: Return { throttled, cleanup } from throttle utility, call cleanup in useEffect return
+- [ui-week4] Comprehensive XSS prevention: sanitizeMarkdown() on ALL user content (thinking, metadata, citations, content)
+- [ui-week4] API route timeouts: AbortController with 10s timeout + clearTimeout in finally block (pattern for GET/DELETE)
+- [ui-week4] Timeout error discrimination: error.name === 'AbortError' → 504 Gateway Timeout, else → 500 Internal Server Error
+- [ui-week4] Session resume pattern: Read URL param → Use as React key → Forces remount → EventSource cleanup triggered
+- [ui-week4] EventSource memory leak: key prop change doesn't trigger cleanup, must read sessionId from URL params
+- [ui-week4] Next.js 15 useSearchParams: MUST wrap component in Suspense boundary (runtime error otherwise)
+- [ui-week4] Memory leak verification: Check cleanup functions called on unmount, timeouts cleared in finally blocks
+- [ui-week4] Multiple REM-FIX cycles indicate pattern problems: Week 4 had 3 cycles (missing deliverables, 10 CRITICAL/HIGH, 8 blocking)
+- [ui-week4] Challenge round protocol: Security wins on CRITICAL, present trade-offs to user on conflicts, synthesize when reviewers idle
+- [ui-week4] Quality score trend: 8.5 → 9.0 shows systematic issue resolution, +10 tests added for REM-FIX-3 regression coverage
+- [ui-week4] Bundle stability: +266 bytes (+0.2%) across 18 fixes demonstrates good architecture (no bloat from fixes)
+- [ui-week5] Fake timers (vi.useFakeTimers()) eliminate timing-dependent test flakiness for animations and async operations
+- [ui-week5] ARIA pattern: role + state attributes together (role="button" + aria-pressed="true/false")
+- [ui-week5] Keyboard accessibility checklist: role + tabIndex={0} + onKeyDown handler + focus:ring-2 + aria-label
+- [ui-week5] ARIA Listbox: role="listbox" + aria-multiselectable on container, role="option" + aria-selected on items
+- [ui-week5] XSS in ARIA: sanitize backend data in ARIA labels even though React escapes JSX text (attributes exposed raw)
+- [ui-week5] Accessibility + security: sanitizeMarkdown() on EVERY backend-sourced prop used in ARIA attributes (title, aria-label)
+- [ui-week5] Accessibility impact: +0.14 kB bundle (+0.14%) for full WCAG 2.1 AA compliance is negligible
+- [ui-week5] ARIA piggybacking: add ARIA attributes to existing re-render cycles = zero overhead for screen readers
+- [ui-week5] Test quality: XSS test for ARIA labels caught vulnerability (malicious excerpt with script tags)
+- [ui-week5] Traceability comments: H-001 for violation ID, H-REM4-1 for fix ID (both in code for audit trail)
+- [ui-week5] CI=true prefix prevents hanging watch mode: `CI=true npm test` (Vitest) or `CI=true npm test -- --run`
+- [ui-week5] Exit code evidence: E2E verification requires unambiguous pass/fail (exit 0 = pass, non-zero = fail)
 - Atlas Search (Lucene) != Atlas Vector Search - don't conflate them
 - Atlas Search is FREE and built-in to MongoDB; Vector Search is separate and costs extra
 - PageIndex tree structure is pure JSON - maps directly to MongoDB documents

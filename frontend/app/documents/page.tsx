@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { UploadForm } from '@/components/documents/UploadForm'
 import { DocumentsClient } from './DocumentsClient'
+import { DocumentsSkeleton } from '@/components/skeletons/DocumentsSkeleton'
 
 // Pattern 1.5: Server Component with Suspense boundary
 export default function DocumentsPage() {
@@ -23,16 +24,7 @@ export default function DocumentsPage() {
         <div className="lg:col-span-2">
           <h2 className="text-xl font-semibold mb-4">Your Documents</h2>
           <ErrorBoundary>
-            <Suspense
-              fallback={
-                <div className="flex items-center justify-center min-h-[400px]">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Loading documents...</p>
-                  </div>
-                </div>
-              }
-            >
+            <Suspense fallback={<DocumentsSkeleton />}>
               <DocumentsClient />
             </Suspense>
           </ErrorBoundary>

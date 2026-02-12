@@ -33,6 +33,7 @@ function TreeNodeComponent({ node, nodes, depth }: TreeNodeComponentProps) {
             onClick={() => setIsExpanded(!isExpanded)}
             className="mt-1 text-gray-500 hover:text-gray-700 flex-shrink-0"
             aria-label={isExpanded ? 'Collapse' : 'Expand'}
+            aria-expanded={isExpanded}
           >
             {isExpanded ? (
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
