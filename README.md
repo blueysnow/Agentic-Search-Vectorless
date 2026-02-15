@@ -92,11 +92,15 @@ The reasoning path is fully traced and returned with the response.
 
 ## Why MongoDB
 
-This is not a "we needed a database and picked one" situation. The document model is specifically why this architecture works.
+This isn't just "we needed a database." MongoDB replaces what would normally be **three or four separate systems** -- and the architecture is simpler because of it.
 
-### The tree is a document
+A typical RAG stack looks like: Postgres (data) + Pinecone/Weaviate (search) + Redis (sessions) + application code to sync them. This project uses **one connection string**. MongoDB handles the tree storage, the full-text search, the session persistence, and the retrieval queries -- all in the same cluster, same deployment, same API.
 
-Each node in the tree is a MongoDB document with three hierarchy patterns:
+Here's why that matters for this specific architecture:
+
+### 1. The document model IS the tree
+
+A tree node in code maps directly to a document in MongoDB. No ORM translation, no table joins, no impedance mismatch. What you see in your code is what's stored in the database:
 
 ```json
 {
@@ -123,56 +127,98 @@ Each node in the tree is a MongoDB document with three hierarchy patterns:
 }
 ```
 
-Three traversal patterns in one document:
-- **`parentNodeId`** -- go up one level: `O(1)`
-- **`materializedPath`** -- get all ancestors from root to here in a single query: `O(1)`
-- **`childNodeIds`** -- get ordered children without a query: `O(1)`
+Three tree-traversal patterns coexist in one document:
+- **`parentNodeId`** -- go up one level: O(1)
+- **`materializedPath`** -- get all ancestors root-to-here in a single query: O(1)
+- **`childNodeIds`** -- ordered children without a query at all: O(1)
 
-A relational database would need self-joins or recursive CTEs for this. A key-value store couldn't index the nested fields. MongoDB stores and queries this natively.
+In a relational database, this would require a self-referencing table with recursive CTEs for ancestor queries, a separate junction table for ordered children, and a materialized path column that you'd have to maintain manually with triggers. In MongoDB, it's just... fields in a document.
 
-### Atlas Search lives next to your data
+And because different node types have different shapes (a table node has column metadata, an appendix has citation info, a figure has dimensions), MongoDB's flexible schema handles it in one collection. No ALTER TABLE, no schema migrations, no "type" column with nullable fields for every variant.
 
-The Atlas Search indexes sit on the same cluster as the tree. No separate search service, no data synchronization, no network hop. One `$search` aggregation stage in the pipeline:
+### 2. Search and data live together -- zero sync
+
+This is the big one.
+
+Most search architectures look like this:
+
+```
+App writes to Postgres  -->  Change Data Capture  -->  Elasticsearch
+App reads from Postgres (data) + Elasticsearch (search) + joins them in code
+```
+
+Two databases, two schemas, a synchronization pipeline, and application-level joins. When a node's summary changes, you update Postgres and **hope** Elasticsearch catches up before the next query.
+
+With MongoDB Atlas Search, the Lucene index sits **on the same data**. No sync. No CDC pipeline. No eventual consistency gap. When a node is inserted during ingestion, it's immediately searchable:
 
 ```javascript
+// This is one aggregation pipeline. Search + filter + project. One round trip.
 [{
   $search: {
     index: "nodes_fulltext",
     compound: {
       must: [{ equals: { path: "documentId", value: "report_2024" } }],
       should: [
-        { text: { query: "Germany revenue", path: "title", score: { boost: { value: 10 } } } },
+        { text: { query: "Germany revenue", path: "title",   score: { boost: { value: 10 } } } },
         { text: { query: "Germany revenue", path: "summary", score: { boost: { value: 5 } } } },
         { text: { query: "Germany revenue", path: "keywords", score: { boost: { value: 3 } } } }
       ]
     }
   }
-}]
+},
+{ $limit: 10 },
+{ $project: { nodeId: 1, title: 1, summary: 1, depth: 1, score: { $meta: "searchScore" } } }]
 ```
 
-And when Atlas Search isn't available (Community Edition, local dev), the system auto-detects at startup and falls back to `$text` search with matching weights. Same API, same code path.
+The same query that searches also filters by document, scores by field importance, and projects only the fields the LLM needs. One pipeline, one network call. Try doing that across Postgres + Elasticsearch.
 
-### Batch operations fit the access patterns
+And when Atlas Search isn't available (Community Edition, local dev), the system auto-detects at startup and falls back to `$text` indexes with the same field weights. Same application code, different engine under the hood. No code path divergence.
 
-The retrieval pipeline's hot path is:
+### 3. Every retrieval query is a single indexed operation
 
-1. **Load root nodes**: `find({ documentId, depth: 0 }).sort({ siblingOrder: 1 })` -- index hit
-2. **Load children of selected nodes**: `find({ documentId, parentNodeId: { $in: [...] } })` -- single `$in` query instead of N queries
-3. **Load page content**: `find({ documentId, nodeId: { $in: [...] } }).sort({ pageNumber: 1 })` -- batched read
-4. **Load ancestors**: `find({ documentId, nodeId: { $in: path_segments } })` -- one query from materialized path
+The retrieval pipeline's hot path -- the queries that run on every single user question -- maps cleanly to MongoDB's query model:
 
-Every query is covered by a compound index. 13 regular indexes + 2 Atlas Search indexes, all created at startup:
+```javascript
+// Step 1: Load the "table of contents" (root nodes)
+db.nodes.find({ documentId: "report_2024", depth: 0 })
+         .sort({ siblingOrder: 1 })
+// Uses compound index: (documentId, depth)
 
-| Collection | Indexes | Key Patterns |
-|-----------|---------|-------------|
-| `documents` | 3 | documentId (unique), ingestion status, domain + date |
-| `nodes` | 7 + text + Atlas Search | documentId+nodeId (unique), parent+sibling, materialized path, depth, leaf, content type, cross-refs |
-| `pages` | 3 + Atlas Search | documentId+page (unique), documentId+nodeId, nodeId |
-| `retrieval_sessions` | 3 | sessionId (unique), userId+date, documentId+date |
+// Step 2: LLM picks 3 branches. Load ALL their children in one query.
+db.nodes.find({ documentId: "report_2024",
+                parentNodeId: { $in: ["0001", "0003", "0005"] } })
+         .sort({ siblingOrder: 1 })
+// Uses compound index: (documentId, parentNodeId, siblingOrder)
+// One $in query instead of 3 separate queries
 
-### Sessions are append-only arrays
+// Step 3: Load page content for the final nodes
+db.pages.find({ documentId: "report_2024",
+                nodeId: { $in: ["0006", "0007"] } })
+         .sort({ pageNumber: 1 })
+// Uses compound index: (documentId, nodeId)
 
-Multi-turn conversations are stored as a single document with a `turns` array. Each new turn is a `$push` -- atomic, no read-modify-write:
+// Step 4: Load ancestor context via materialized path
+// Node 0006 has materializedPath: "/0001/0003/0006"
+// Parse path segments, single $in query:
+db.nodes.find({ documentId: "report_2024",
+                nodeId: { $in: ["0001", "0003"] } },
+              { nodeId: 1, title: 1, summary: 1, depth: 1 })
+         .sort({ depth: 1 })
+// Uses compound index: (documentId, nodeId)
+```
+
+Four queries. Four index hits. Zero collection scans. The compound indexes are designed to match these exact access patterns -- 13 regular indexes + 2 Atlas Search indexes, all created at startup.
+
+| Collection | Indexes | Why |
+|-----------|---------|-----|
+| `nodes` | 7 regular + text + Atlas Search | Tree traversal in every direction: up, down, by depth, by type, by path |
+| `pages` | 3 regular + Atlas Search | Content lookup by node or by page number |
+| `documents` | 3 regular | Document listing, status filtering, domain browsing |
+| `retrieval_sessions` | 3 regular | Session lookup by user, by document, by ID |
+
+### 4. Atomic multi-operation writes
+
+Multi-turn conversations are a single document with a `turns` array. Adding a turn is one atomic operation that does three things at once:
 
 ```javascript
 db.retrieval_sessions.updateOne(
@@ -185,13 +231,37 @@ db.retrieval_sessions.updateOne(
 )
 ```
 
-One write, three operations, atomic. The conversation history stays ordered, the summary stats stay consistent, and you never need a separate "turns" table.
+Append a turn, increment counters, update timestamp. One write. Atomic. No transaction needed. No separate "turns" table with a foreign key. No read-modify-write cycle. No race condition between two concurrent requests appending to the same session.
 
-### Content is separate from structure
+Cross-references work the same way -- they're an array inside the node document. Ingestion detects "See Table A.1" and pushes `{ targetNodeId: "0042", label: "A.1", type: "table" }` directly into the node. During retrieval, the LLM sees the array and follows the reference. No join table, no separate lookup.
 
-The tree nodes are small (~200 bytes each -- just titles, summaries, and pointers). Page content lives in a separate `pages` collection. This means tree traversal queries touch small documents (fast), and content is only loaded when the LLM actually needs to read it.
+### 5. Structure and content at different scales
 
-This is a deliberate design choice. During tree navigation, the LLM makes 3-4 selection decisions. Each decision needs to see ~50 node summaries. If each node included its full page text, you'd be loading megabytes of unused content on every navigation step.
+The tree nodes are deliberately small (~200 bytes). Page content lives in a separate `pages` collection. This lets the system query structure fast and load content only when needed.
+
+During tree navigation, the LLM makes 3-4 selection decisions. At each level, it reads ~50 node summaries to decide which branches to explore. If node documents included full page text, each navigation step would load megabytes of content the LLM never reads.
+
+With separate collections:
+- **Tree queries** touch small documents (titles + summaries + pointers) --> fast
+- **Content queries** run only after the LLM decides what to read --> no wasted I/O
+- **Atlas Search** indexes the lightweight nodes collection --> smaller index, faster search
+
+This is a natural MongoDB pattern: model your data by **access pattern**, not by entity relationship. The system accesses structure and content at different times, so they live in different collections.
+
+### What this replaces
+
+Without MongoDB, this system would need:
+
+| Concern | Typical Stack | MongoDB |
+|---------|-------------|---------|
+| Tree storage | Postgres with recursive CTEs | Document model with materialized paths |
+| Full-text search | Elasticsearch (+ sync pipeline) | Atlas Search (same cluster, zero sync) |
+| Session persistence | Redis or Postgres + turns table | `$push` to embedded array |
+| Content storage | S3 or file system | `pages` collection (co-located, indexed) |
+| Batch child lookups | N+1 queries or complex JOINs | Single `$in` query |
+| Schema for mixed node types | Nullable columns or EAV pattern | Flexible documents in one collection |
+
+That's four services collapsed into one. One connection string. One deployment. One set of indexes to think about.
 
 ## Inspired by PageIndex
 
