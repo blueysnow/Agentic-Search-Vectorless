@@ -1,0 +1,68 @@
+<!-- CC10x Memory File - DO NOT manually edit section headers -->
+
+## Common Gotchas
+- Frontend proxy URLs must match backend route mount points exactly -- backend has /sessions NOT /api/sessions
+- Always verify list endpoints exist before building list UIs -- frontend sessions page called GET /sessions but backend only had GET /sessions/{id}
+- When adding accepted file types, update ALL test files that test rejection (test files, integration tests, error messages)
+- MongoDB Community lacks $search (Atlas Search) -- use $text with text index as fallback
+- NEXT_PUBLIC_API_URL must be Docker build ARG, not runtime ENV -- Next.js bakes it into JS at build time
+- Browser connects to localhost:8000 (not docker network name) -- CORS must allow localhost:3000
+- Next.js standalone output needs .next/static and public/ copied separately in Dockerfile
+- detect_search_backend() once at startup avoids per-query overhead for Atlas detection
+- Text index weights should mirror Atlas Search boost values for consistent relevance ranking
+- config.py port default should be 8000 (backend), not 3000 (frontend) -- separate processes
+- SSE streaming: errors must be SSE events (type:error), not HTTP error codes -- EventSource requires 200
+- StreamRequest fields: accept both frontend names (message, document_ids) and backend names (query, document_id)
+- Frontend proxy URL must match backend route exactly (was /api/chat/stream, correct is /query/stream)
+- pypdf is API-compatible drop-in for PyPDF2 (PdfReader/PdfWriter same interface)
+- Frontend API config: Don't assume /api prefix - verify actual backend route paths
+- Browser extension hydration: suppressHydrationWarning on root html element
+- PyPDF2 is deprecated → use pypdf
+- Atlas Search (Lucene) != Atlas Vector Search - don't conflate them
+- Node content in separate pages collection, NOT embedded in nodes
+- asyncio.gather: ALWAYS use return_exceptions=True
+- extract_json() returns None on failure, callers MUST check
+- LLM prompts: wrap ALL user content in XML delimiters
+- Session persistence must NEVER crash after answer is computed
+- Sync pymongo blocks async event loop - use asyncio.to_thread() or Motor
+- Tree navigator N+1: batch with $in instead of sequential _get_children calls
+- structlog get_logger(__name__) is the ONLY logging pattern
+- Benchmark silent failures: generic error handler + output dict defaults = invisible bugs
+- FastAPI lifespan must re-raise on startup DB failure
+- Three-tier timeout: 10s DEFAULT, 60s QUERY, 300s UPLOAD
+- TDD methodology: RED-GREEN cycle catches bugs early
+- SSE proxy double-wrapping: backend sends SSE → proxy strips "data: " prefix → proxy re-wraps → client EventSource
+- SSE proxy must strip "data: " before JSON.parse or ALL data silently dropped
+- Silent catch in proxy must forward errors as SSE error events, not just console.error
+- SSE error messages MUST be generic (never f"error: {exc}") — logger.exception captures full detail server-side
+- When replacing function with batch variant, update ALL test mock patch targets
+- Test mocks must match actual wire format (SSE "data: {json}\n\n"), not idealized format
+- MongoDB $in batch query needs .limit() to prevent unbounded results from flat documents
+- Docker Compose: bind MongoDB to 127.0.0.1 (not 0.0.0.0) for local dev security
+- Docker Compose v2 ignores version field — remove deprecated version: "3.9"
+- asyncio.wait_for wraps long-running coroutines with timeout + catches TimeoutError separately
+- nodes_parent_sibling compound index {documentId, parentNodeId, siblingOrder} supports $in on parentNodeId per ESR rule
+- Hatchling + Docker layer caching: need stub src/ dir or two-step install (deps first, then package --no-deps)
+- Docker COPY fails hard on missing source dirs -- mkdir -p in builder stage before COPY
+- next/font/google fails in Docker builds without internet -- use next/font/local with bundled .ttf
+- Health checks must return non-200 (503) on degraded state or Docker HEALTHCHECK is blind
+- Docker Compose env_file: use `required: false` for optional .env files (v2.24+)
+- MongoDB $text does NOT support fuzzy matching -- log warning when fuzzy requested on Community backend
+- Port conflicts: local dev server on :3000 blocks Docker frontend container -- lsof -i :PORT + kill PID
+- MongoDB replica set auto-initializes via healthcheck: `try { rs.status().ok } catch { rs.initiate(); 1 }`
+- depends_on with condition: service_healthy ensures MongoDB PRIMARY ready before backend starts
+- Docker Compose named volumes persist between docker compose down/up (mongodb_data keeps data)
+- FastAPI UploadFile/Form requires python-multipart package -- missing = RuntimeError at import, not runtime
+- Default LLM model MUST match default provider -- gpt-4o-mini + anthropic provider = 404 (model not found)
+- Frontend file uploads use FormData → backend needs UploadFile endpoint, NOT JSON IngestRequest
+- Separate /ingest/upload (multipart) from /ingest (JSON) -- single endpoint can't serve both content types
+- Alpine Linux wget healthcheck: use 0.0.0.0 not localhost when server binds to HOSTNAME=0.0.0.0
+- PDF upload: use BytesIO wrapper to pass file bytes to parse_pdf() -- UploadFile.read() returns bytes not file path
+- next/typescript ESLint config: `any` is ERROR not warning -- always run `next build` not just `tsc` as final gate
+- Detail proxy transforms missed when list proxy gets the transform -- always verify BOTH list and detail endpoints
+- CORS allowed_methods must include DELETE if frontend proxy uses DELETE -- default ["GET", "POST"] blocks silently
+- UI filter controls without backend support = dead UI -- never leave connected but non-functional
+- Proxy layer must forward ALL query params (limit, offset) or pagination silently falls back to defaults
+- When adding accepted file types, update ALL rejection tests to use truly invalid types (.exe), not recently-accepted ones (.txt)
+- New list endpoints follow pattern: manager query fn + Pydantic models + FastAPI route + frontend proxy transform
+- Frontend proxy transforms backend field names (sessionId->id, documentId->documentIds[], totalTurns->messageCount)

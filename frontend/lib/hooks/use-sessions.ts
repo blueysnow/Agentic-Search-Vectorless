@@ -20,36 +20,26 @@ export interface Session {
 
 interface UseSessionsOptions {
   documentId?: string
-  startDate?: string
-  endDate?: string
-  limit?: number  // H6: Add pagination support
+  limit?: number
   offset?: number
 }
 
 /**
  * Fetches list of conversation sessions with optional filters
  * Uses TanStack Query for caching and request deduplication
- * H6: Added pagination support (default limit=50)
  */
 export function useSessions(options: UseSessionsOptions = {}) {
-  const { documentId, startDate, endDate, limit = 50, offset = 0 } = options
+  const { documentId, limit = 50, offset = 0 } = options
 
   return useQuery({
-    queryKey: ['sessions', { documentId, startDate, endDate, limit, offset }],
+    queryKey: ['sessions', { documentId, limit, offset }],
     queryFn: async () => {
       const params = new URLSearchParams()
 
       if (documentId) {
         params.append('documentId', documentId)
       }
-      if (startDate) {
-        params.append('startDate', startDate)
-      }
-      if (endDate) {
-        params.append('endDate', endDate)
-      }
 
-      // H6: Add pagination parameters
       params.append('limit', String(limit))
       params.append('offset', String(offset))
 

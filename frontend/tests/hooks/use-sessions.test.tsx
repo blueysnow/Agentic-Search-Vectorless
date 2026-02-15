@@ -146,17 +146,14 @@ describe('useSessions', () => {
     expect(global.fetch).toHaveBeenCalledWith('/api/sessions?documentId=doc-1&limit=50&offset=0')
   })
 
-  it('filters sessions by date range', async () => {
+  it('supports custom pagination parameters', async () => {
     ;(global.fetch as any).mockResolvedValueOnce({
       ok: true,
       json: async () => ({ sessions: [] }),
     })
 
-    const startDate = '2024-01-01'
-    const endDate = '2024-01-31'
-
     const { result } = renderHook(
-      () => useSessions({ startDate, endDate }),
+      () => useSessions({ limit: 10, offset: 20 }),
       {
         wrapper: createWrapper(),
       }
@@ -166,9 +163,8 @@ describe('useSessions', () => {
       expect(result.current.isSuccess).toBe(true)
     })
 
-    // H6: Pagination params are now always included
     expect(global.fetch).toHaveBeenCalledWith(
-      '/api/sessions?startDate=2024-01-01&endDate=2024-01-31&limit=50&offset=0'
+      '/api/sessions?limit=10&offset=20'
     )
   })
 })

@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
         // Call FastAPI backend chat endpoint
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
-        const res = await fetch(`${apiUrl}/api/chat/stream`, {
+        const res = await fetch(`${apiUrl}/query/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(requestBody),
@@ -59,26 +59,36 @@ export async function GET(request: NextRequest) {
           const { done, value } = await reader.read()
           if (done) break
 
-          // Backend sends newline-delimited JSON chunks
+          // Backend sends SSE format: "data: {json}\n\n"
           const lines = decoder.decode(value).split('\n')
 
           for (const line of lines) {
-            if (!line.trim()) continue
+            const trimmed = line.trim()
+            if (!trimmed) continue
 
             try {
-              // Parse and validate chunk
-              const chunk = JSON.parse(line)
+              // Strip SSE "data: " prefix if present (backend sends SSE format)
+              const jsonStr = trimmed.startsWith('data: ')
+                ? trimmed.slice(6)
+                : trimmed
+              const chunk = JSON.parse(jsonStr)
 
               // Forward chunk to client in SSE format
-              controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`))
-            } catch (e) {
-              console.error('Failed to parse chunk:', line)
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`)
+              )
+            } catch {
+              // Forward parse failures as error events so the client knows
+              controller.enqueue(
+                encoder.encode(
+                  `data: ${JSON.stringify({ type: 'error', content: 'Failed to parse backend response' })}\n\n`
+                )
+              )
             }
           }
         }
 
-        // Signal completion
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: 'done' })}\n\n`))
+        // Backend sends its own "done" event; only add one if stream ended without it
         controller.close()
       } catch (error) {
         // Send error to client

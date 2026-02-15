@@ -132,3 +132,9 @@
 - Benchmark factory pattern: pre-configured test case suites for ingest/retrieval/accuracy/load/cost/E2E scenarios
 - BenchmarkResult consistency: always return dict with all fields (use defaults 0.0 for missing, not None)
 - Benchmark suite composition: compose from atomic test cases (not inheritance) for flexibility and reuse
+- [debug-upload] Frontend API config: Don't assume `/api` prefix - verify actual backend route paths (FastAPI uses direct prefixes: /documents, /query, /sessions)
+- [debug-upload] Next.js convention uses /api for API routes, but this doesn't apply to external FastAPI backends
+- [debug-upload] Browser extension hydration pattern: `suppressHydrationWarning` on root `<html>` element prevents extension style injection warnings
+- [debug-upload] CSS custom property pattern: `--ro-scrollbar-height`, `--extension-*` indicates browser extension interference
+- [debug-upload] TDD for config validation: Direct string assertions prevent `/api` prefix regression (test: "endpoints should not have /api prefix")
+- [debug-upload] Test pattern for layout: File-based validation (`fs.readFileSync`) acceptable for static root layout verification

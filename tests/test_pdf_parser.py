@@ -1,20 +1,20 @@
 """Tests for src/ingestion/parsers/pdf_parser.py.
 
-These tests use a tiny in-memory PDF generated with PyPDF2 so no external
+These tests use a tiny in-memory PDF generated with pypdf so no external
 fixture files are needed.
 """
 
 from io import BytesIO
 
-import PyPDF2
+import pypdf
 import pytest
 
 from src.ingestion.parsers.pdf_parser import PDFParseError, get_text_of_pages, parse_pdf
 
 
 def _make_simple_pdf() -> BytesIO:
-    """Create a 2-page blank in-memory PDF (no external deps beyond PyPDF2)."""
-    writer = PyPDF2.PdfWriter()
+    """Create a 2-page blank in-memory PDF (no external deps beyond pypdf)."""
+    writer = pypdf.PdfWriter()
     writer.add_blank_page(width=612, height=792)
     writer.add_blank_page(width=612, height=792)
     output = BytesIO()
@@ -25,7 +25,7 @@ def _make_simple_pdf() -> BytesIO:
 
 def test_parse_pdf_pypdf2():
     pdf = _make_simple_pdf()
-    pages = parse_pdf(pdf, backend="PyPDF2")
+    pages = parse_pdf(pdf, backend="pypdf")
     assert len(pages) == 2
     assert pages[0].page_number == 1
     assert pages[1].page_number == 2
@@ -49,7 +49,7 @@ def test_parse_pdf_invalid_backend():
 def test_parse_pdf_corrupt_pypdf2():
     corrupt = BytesIO(b"this is not a pdf")
     with pytest.raises(PDFParseError, match="Failed to open PDF"):
-        parse_pdf(corrupt, backend="PyPDF2")
+        parse_pdf(corrupt, backend="pypdf")
 
 
 def test_parse_pdf_corrupt_pymupdf():
@@ -60,7 +60,7 @@ def test_parse_pdf_corrupt_pymupdf():
 
 def test_get_text_of_pages_with_tags():
     pdf = _make_simple_pdf()
-    pages = parse_pdf(pdf, backend="PyPDF2")
+    pages = parse_pdf(pdf, backend="pypdf")
     text = get_text_of_pages(pages, 1, 2, tag=True)
     assert "<start_index_1>" in text
     assert "<end_index_2>" in text
@@ -68,6 +68,6 @@ def test_get_text_of_pages_with_tags():
 
 def test_get_text_of_pages_without_tags():
     pdf = _make_simple_pdf()
-    pages = parse_pdf(pdf, backend="PyPDF2")
+    pages = parse_pdf(pdf, backend="pypdf")
     text = get_text_of_pages(pages, 1, 2, tag=False)
     assert "<start_index" not in text

@@ -4,19 +4,19 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const documentId = searchParams.get('documentId')
-    const startDate = searchParams.get('startDate')
-    const endDate = searchParams.get('endDate')
+    const limit = searchParams.get('limit')
+    const offset = searchParams.get('offset')
 
     // Build query parameters for backend
     const params = new URLSearchParams()
     if (documentId) params.append('document_id', documentId)
-    if (startDate) params.append('start_date', startDate)
-    if (endDate) params.append('end_date', endDate)
+    if (limit) params.append('limit', limit)
+    if (offset) params.append('offset', offset)
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
     const url = params.toString()
-      ? `${apiUrl}/api/sessions?${params.toString()}`
-      : `${apiUrl}/api/sessions`
+      ? `${apiUrl}/sessions?${params.toString()}`
+      : `${apiUrl}/sessions`
 
     // H1: Add 10-second timeout for session list fetch
     const abortController = new AbortController()
@@ -35,7 +35,23 @@ export async function GET(request: NextRequest) {
       }
 
       const data = await response.json()
-      return NextResponse.json({ sessions: data.sessions })
+      // Transform backend session format to frontend SessionSummary format
+      interface BackendSession {
+        sessionId: string
+        createdAt: string
+        updatedAt: string
+        documentId?: string
+        totalTurns?: number
+      }
+      const sessions = (data.sessions || []).map((s: BackendSession) => ({
+        id: s.sessionId,
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt,
+        documentIds: s.documentId ? [s.documentId] : [],
+        messageCount: s.totalTurns || 0,
+        preview: `Session with ${s.totalTurns || 0} turns`,
+      }))
+      return NextResponse.json({ sessions })
     } finally {
       clearTimeout(timeoutId)
     }

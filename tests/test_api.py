@@ -249,9 +249,10 @@ class TestHealthEndpoint:
         with patch("src.api.server.get_client") as mock_client:
             mock_client.return_value.admin.command.side_effect = Exception("down")
             resp = client.get("/health")
-            assert resp.status_code == 200
+            assert resp.status_code == 503
             body = resp.json()
             assert body["mongodb"] == "disconnected"
+            assert body["status"] == "degraded"
 
 
 # ===========================================================================

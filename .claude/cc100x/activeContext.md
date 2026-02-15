@@ -7,6 +7,13 @@
 - Frontend: Next.js 15 + React 19 with Vercel patterns, TanStack Query, EventSource SSE streaming, toast notifications, loading skeletons, enhanced accessibility
 
 ## Recent Changes
+- **DEBUG COMPLETE**: Upload failure + hydration mismatch fixed (290/290 tests, 2 fixes with TDD, production-ready)
+  - Root cause 1: Frontend config had `/api` prefix, backend routes don't (fixed: removed `/api` from frontend/lib/config.ts endpoints)
+  - Root cause 2: Browser extension injecting `style="--ro-scrollbar-height:0px"` (fixed: added suppressHydrationWarning to root html)
+  - Investigation: 3 hypotheses tested, 2 winning (API path mismatch + browser extension interference)
+  - Fixes: TDD cycle (RED-GREEN), 2 regression tests added (config.test.ts, layout.test.tsx)
+  - Reviews: Security (APPROVED - no vulnerabilities), Performance (APPROVED - 0 regression, 102 kB stable), Quality (APPROVED - 9.7/10)
+  - Verification: 290/290 tests, build exit code 0, TypeScript 0 errors, all E2E scenarios passed
 - **UI WEEK 5 COMPLETE**: Polish & Optimization (289/289 tests, 7 deliverables, 102 kB bundle, WCAG 2.1 AA compliant, production-ready)
   - Loading skeletons for all Suspense boundaries (documents, sessions, chat)
   - Toast notification system using @radix-ui/react-toast

@@ -85,7 +85,7 @@ describe('UploadForm', () => {
     })
 
     // Upload should NOT be called
-    expect(apiClient.uploadDocument).not.toHaveBeenCalled()
+    expect(apiClient.uploadDocumentWithProgress).not.toHaveBeenCalled()
   })
 
   // SF-009: Invalid file type test
@@ -94,20 +94,57 @@ describe('UploadForm', () => {
     // we test the validation schema directly to ensure invalid types are caught
     const { documentUploadSchema } = await import('@/lib/validation/document')
 
-    const invalidFile = new File(['content'], 'document.txt', { type: 'text/plain' })
+    const invalidFile = new File(['content'], 'document.exe', { type: 'application/octet-stream' })
     const validationResult = documentUploadSchema.safeParse({
       file: invalidFile,
       domain: 'test',
       description: 'test'
     })
 
-    // Validation should fail for .txt files
+    // Validation should fail for .exe files
     expect(validationResult.success).toBe(false)
     if (!validationResult.success) {
-      expect(validationResult.error.errors[0].message).toMatch(/file must be pdf or markdown/i)
+      expect(validationResult.error.errors[0].message).toMatch(/file must be pdf, markdown, or text/i)
     }
 
     // Verify the validation error is user-friendly
     expect(validationResult.success).toBe(false)
+  })
+
+  it('should show success banner with chat link after upload', async () => {
+    const user = userEvent.setup()
+
+    // Mock successful upload
+    vi.mocked(apiClient.uploadDocumentWithProgress).mockImplementation(
+      (_formData, onProgress) => {
+        onProgress(100)
+        return Promise.resolve({
+          documentId: 'doc-123',
+          name: 'test.pdf',
+          status: 'processing',
+          totalPages: 5,
+          totalNodes: 20,
+          totalTokens: 1000,
+        })
+      }
+    )
+
+    render(createElement(UploadForm), { wrapper: createWrapper() })
+
+    const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' })
+    const input = screen.getByLabelText(/document file/i)
+    await user.upload(input, file)
+
+    const submitButton = screen.getByRole('button', { name: /upload/i })
+    await user.click(submitButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/document uploaded successfully/i)).toBeInTheDocument()
+      expect(screen.getByText(/chat about this document/i)).toBeInTheDocument()
+    })
+
+    // Verify the chat link points to /query with documentId
+    const chatLink = screen.getByText(/chat about this document/i)
+    expect(chatLink.closest('a')).toHaveAttribute('href', '/query?documentId=doc-123')
   })
 })

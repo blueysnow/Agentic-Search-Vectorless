@@ -23,8 +23,11 @@ from src.api.routes.documents import router as documents_router
 from src.api.routes.ingest import router as ingest_router
 from src.api.routes.query import router as query_router
 from src.api.routes.sessions import router as sessions_router
+from src.api.routes.stream import router as stream_router
 from src.config import get_settings
 from src.db.client import close_client, get_client
+from src.db.indexes import ensure_indexes, ensure_text_index
+from src.retrieval.atlas_search import init_search_backend
 from src.utils.logger import get_logger, setup_logging
 
 logger = get_logger(__name__)
@@ -45,6 +48,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         logger.exception("mongodb_connection_failed_at_startup")
         raise
+
+    # Create indexes (idempotent) and detect search backend
+    try:
+        idx_names = ensure_indexes()
+        logger.info("indexes_ensured", count=len(idx_names))
+        text_idx = ensure_text_index()
+        logger.info("text_index_ensured", count=len(text_idx))
+    except Exception:
+        logger.warning("index_creation_warning", exc_info=True)
+
+    init_search_backend()
+
     yield
     close_client()
     logger.info("application_shut_down")
@@ -82,7 +97,7 @@ def create_app() -> FastAPI:
             CORSMiddleware,
             allow_origins=origins,
             allow_credentials=False,
-            allow_methods=["GET", "POST"],
+            allow_methods=["GET", "POST", "DELETE"],
             allow_headers=["Content-Type", "Authorization"],
         )
 
@@ -96,16 +111,23 @@ def create_app() -> FastAPI:
     app.include_router(query_router, prefix="/query", tags=["query"])
     app.include_router(documents_router, prefix="/documents", tags=["documents"])
     app.include_router(sessions_router, prefix="/sessions", tags=["sessions"])
+    app.include_router(stream_router, prefix="/query/stream", tags=["stream"])
 
     # -- Health check --
-    @app.get("/health", response_model=HealthResponse, tags=["health"])
-    def health_check() -> HealthResponse:
+    @app.get("/health", tags=["health"])
+    def health_check() -> JSONResponse:
         mongo_status = "unknown"
         try:
             get_client().admin.command("ping")
             mongo_status = "connected"
         except Exception:
             mongo_status = "disconnected"
-        return HealthResponse(status="ok", mongodb=mongo_status)
+
+        health = HealthResponse(
+            status="ok" if mongo_status == "connected" else "degraded",
+            mongodb=mongo_status,
+        )
+        status_code = 200 if mongo_status == "connected" else 503
+        return JSONResponse(content=health.model_dump(), status_code=status_code)
 
     return app

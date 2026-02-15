@@ -1,10 +1,15 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import localFont from 'next/font/local'
 import './globals.css'
 import { Providers } from './providers'
 import { Toaster } from '@/components/ui/toaster'
+import { AppShell } from '@/components/layout/AppShell'
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = localFont({
+  src: '../public/fonts/Inter-Variable.ttf',
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Vectorless RAG System',
@@ -17,9 +22,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <AppShell>{children}</AppShell>
+        </Providers>
         <Toaster />
       </body>
     </html>

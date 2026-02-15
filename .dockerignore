@@ -1,0 +1,21 @@
+# Root .dockerignore -- backend Dockerfile context
+.git
+.github
+node_modules
+frontend/
+__pycache__
+*.pyc
+.env
+.env.*
+.venv
+venv
+tests/
+docs/
+*.md
+.claude/
+.pytest_cache
+.ruff_cache
+.mypy_cache
+htmlcov
+.coverage
+*.pid

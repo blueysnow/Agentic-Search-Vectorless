@@ -6,15 +6,21 @@ import { describe, it, expect } from 'vitest'
 
 describe('REM-FIX-3 Part 2: HIGH + MEDIUM Priority Fixes', () => {
   describe('H-REM3-4: C1 incomplete - resume session broken', () => {
-    it('should read sessionId from URL params in chat/page.tsx', () => {
+    it('chat page redirects to /query which reads sessionId from URL params', () => {
       const fs = require('fs')
       const path = require('path')
-      const filePath = path.join(process.cwd(), 'app/chat/page.tsx')
-      const content = fs.readFileSync(filePath, 'utf-8')
 
-      // Should use useSearchParams() to read sessionId from URL
-      const hasUseSearchParams = /useSearchParams/.test(content)
-      const hasGetSessionId = /searchParams\.get\(['"]sessionId['"]\)/.test(content)
+      // /chat now redirects to /query
+      const chatPath = path.join(process.cwd(), 'app/chat/page.tsx')
+      const chatContent = fs.readFileSync(chatPath, 'utf-8')
+      expect(chatContent).toMatch(/redirect\(['"]\/query['"]\)/)
+
+      // /query reads sessionId from URL params
+      const queryPath = path.join(process.cwd(), 'app/query/page.tsx')
+      const queryContent = fs.readFileSync(queryPath, 'utf-8')
+
+      const hasUseSearchParams = /useSearchParams/.test(queryContent)
+      const hasGetSessionId = /searchParams\.get\(['"]sessionId['"]\)/.test(queryContent)
 
       expect(hasUseSearchParams).toBe(true)
       expect(hasGetSessionId).toBe(true)

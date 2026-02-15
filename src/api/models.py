@@ -137,6 +137,25 @@ class DocumentListResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+class SessionListItemResponse(BaseModel):
+    """Item in the session list response."""
+
+    session_id: str = Field(..., alias="sessionId")
+    document_id: str | None = Field(None, alias="documentId")
+    total_turns: int = Field(0, alias="totalTurns")
+    created_at: datetime | None = Field(None, alias="createdAt")
+    updated_at: datetime | None = Field(None, alias="updatedAt")
+
+    model_config = {"populate_by_name": True}
+
+
+class SessionListResponse(BaseModel):
+    """GET /sessions response body."""
+
+    sessions: list[SessionListItemResponse] = Field(default_factory=list)
+    total: int = 0
+
+
 class TurnResponse(BaseModel):
     """A single turn in a session."""
 

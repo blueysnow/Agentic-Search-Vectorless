@@ -1,0 +1,10 @@
+# Frontend .dockerignore
+.git
+node_modules
+.next
+.env
+.env.local
+.env.*.local
+*.md
+tests/
+.claude/

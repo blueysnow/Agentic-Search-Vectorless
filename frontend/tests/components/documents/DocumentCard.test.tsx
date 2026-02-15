@@ -1,9 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createElement, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { DocumentCard } from '@/components/documents/DocumentCard'
 import type { Document } from '@/lib/api/types'
+
+// Mock next/navigation
+const mockPush = vi.fn()
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: mockPush }),
+}))
 
 const createWrapper = () => {
   const queryClient = new QueryClient({
@@ -107,5 +114,39 @@ describe('DocumentCard', () => {
 
     const link = screen.getByRole('link')
     expect(link).toHaveAttribute('href', '/documents/doc1')
+  })
+
+  it('should show Chat button for completed documents', () => {
+    render(createElement(DocumentCard, { document: mockDocument }), {
+      wrapper: createWrapper(),
+    })
+
+    const chatButton = screen.getByRole('button', { name: /chat about/i })
+    expect(chatButton).toBeInTheDocument()
+  })
+
+  it('should not show Chat button for non-completed documents', () => {
+    const pendingDoc = {
+      ...mockDocument,
+      ingestion: { ...mockDocument.ingestion, status: 'processing' as const },
+    }
+
+    render(createElement(DocumentCard, { document: pendingDoc }), {
+      wrapper: createWrapper(),
+    })
+
+    expect(screen.queryByRole('button', { name: /chat about/i })).not.toBeInTheDocument()
+  })
+
+  it('should navigate to /query?documentId=xxx when Chat button is clicked', async () => {
+    const user = userEvent.setup()
+    render(createElement(DocumentCard, { document: mockDocument }), {
+      wrapper: createWrapper(),
+    })
+
+    const chatButton = screen.getByRole('button', { name: /chat about/i })
+    await user.click(chatButton)
+
+    expect(mockPush).toHaveBeenCalledWith('/query?documentId=doc1')
   })
 })

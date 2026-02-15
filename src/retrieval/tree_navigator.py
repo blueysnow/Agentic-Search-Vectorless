@@ -46,12 +46,20 @@ def _format_sections(nodes: list[dict[str, Any]]) -> str:
     return "\n".join(lines)
 
 
-def _get_children(document_id: str, parent_node_id: str) -> list[dict[str, Any]]:
-    """Load children of a node from MongoDB, ordered by sibling_order."""
+def _get_children_batch(
+    document_id: str, parent_node_ids: list[str]
+) -> list[dict[str, Any]]:
+    """Load children of multiple nodes in a single $in query (fixes N+1 pattern).
+
+    MongoDB query-batch-operations rule: use $in instead of N sequential queries.
+    Results capped at 200 to prevent unbounded result sets.
+    """
+    if not parent_node_ids:
+        return []
     return list(
         nodes_col()
         .find(
-            {"documentId": document_id, "parentNodeId": parent_node_id},
+            {"documentId": document_id, "parentNodeId": {"$in": parent_node_ids}},
             {
                 "nodeId": 1,
                 "title": 1,
@@ -65,6 +73,7 @@ def _get_children(document_id: str, parent_node_id: str) -> list[dict[str, Any]]
             },
         )
         .sort([("siblingOrder", 1)])
+        .limit(200)
     )
 
 
@@ -237,12 +246,7 @@ async def tree_navigate(
         if all_leaves:
             break
 
-        # Load children for next level
-        next_level_nodes: list[dict[str, Any]] = []
-        for nid in selected_ids:
-            children = _get_children(document_id, nid)
-            next_level_nodes.extend(children)
-
-        current_nodes = next_level_nodes
+        # Load children for next level -- batch query (fixes N+1)
+        current_nodes = _get_children_batch(document_id, selected_ids)
 
     return candidates, navigation_path

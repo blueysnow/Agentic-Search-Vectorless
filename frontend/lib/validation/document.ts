@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
-const ACCEPTED_FILE_TYPES = ['application/pdf', 'text/markdown']
-const ACCEPTED_FILE_EXTENSIONS = ['.pdf', '.md', '.markdown']
+const ACCEPTED_FILE_TYPES = ['application/pdf', 'text/markdown', 'text/plain']
+const ACCEPTED_FILE_EXTENSIONS = ['.pdf', '.md', '.markdown', '.txt']
 
 export const documentUploadSchema = z.object({
   file: z
@@ -20,7 +20,7 @@ export const documentUploadSchema = z.object({
         )
         return hasValidType || hasValidExtension
       },
-      'File must be PDF or Markdown (.pdf, .md, .markdown)'
+      'File must be PDF, Markdown, or Text (.pdf, .md, .markdown, .txt)'
     ),
   domain: z.string().optional(),
   description: z.string().optional(),

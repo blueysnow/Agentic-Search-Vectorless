@@ -7,10 +7,11 @@ describe('API_CONFIG', () => {
     expect(typeof API_CONFIG.baseUrl).toBe('string')
   })
 
-  it('should have all endpoints defined', () => {
-    expect(API_CONFIG.endpoints.documents).toBe('/api/documents')
-    expect(API_CONFIG.endpoints.query).toBe('/api/query')
-    expect(API_CONFIG.endpoints.sessions).toBe('/api/sessions')
+  it('should have all endpoints defined without /api prefix (backend routes are /documents, /ingest, /query, /sessions)', () => {
+    expect(API_CONFIG.endpoints.documents).toBe('/documents')
+    expect(API_CONFIG.endpoints.ingest).toBe('/ingest')
+    expect(API_CONFIG.endpoints.query).toBe('/query')
+    expect(API_CONFIG.endpoints.sessions).toBe('/sessions')
   })
 
   it('should have timeout configurations', () => {

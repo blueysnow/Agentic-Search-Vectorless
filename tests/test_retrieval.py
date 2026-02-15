@@ -1789,7 +1789,7 @@ class TestHunterRegressions:
 
         with (
             patch("src.retrieval.tree_navigator._get_root_nodes") as mock_root,
-            patch("src.retrieval.tree_navigator._get_children") as mock_children,
+            patch("src.retrieval.tree_navigator._get_children_batch") as mock_children,
         ):
             mock_root.return_value = [
                 {

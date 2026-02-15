@@ -2,6 +2,7 @@ import { API_CONFIG } from '../config'
 import type {
   Document,
   DocumentFilters,
+  IngestResponse,
   Session,
   QueryRequest,
   QueryResponse,
@@ -60,17 +61,17 @@ class APIClient {
   }
 
   // Documents
-  async uploadDocument(formData: FormData): Promise<Document> {
+  async uploadDocument(formData: FormData): Promise<IngestResponse> {
     // SF-011 Fix: Add timeout with AbortController for uploads
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), this.UPLOAD_TIMEOUT)
 
     try {
-      const res = await fetch(`${this.baseUrl}${API_CONFIG.endpoints.documents}`, {
+      const res = await fetch(`${this.baseUrl}${API_CONFIG.endpoints.ingest}/upload`, {
         method: 'POST',
         body: formData,
         signal: controller.signal,
-        // Let browser set Content-Type for FormData
+        // Let browser set Content-Type for FormData (multipart/form-data boundary)
       })
 
       clearTimeout(timeoutId)
@@ -96,9 +97,64 @@ class APIClient {
     }
   }
 
+  // Upload with XHR progress tracking (fetch API has no upload progress support)
+  uploadDocumentWithProgress(
+    formData: FormData,
+    onProgress: (percent: number) => void
+  ): Promise<IngestResponse> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', `${this.baseUrl}${API_CONFIG.endpoints.ingest}/upload`)
+      xhr.timeout = this.UPLOAD_TIMEOUT
+
+      xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.round((e.loaded / e.total) * 100)
+          onProgress(percent)
+        }
+      })
+
+      xhr.addEventListener('load', () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText))
+          } catch {
+            reject(new Error('Failed to parse upload response'))
+          }
+        } else {
+          let errorDetail = `Upload failed: HTTP ${xhr.status} ${xhr.statusText}`
+          try {
+            const errorBody = JSON.parse(xhr.responseText)
+            errorDetail = errorBody.detail || errorDetail
+          } catch {
+            // Use default error detail
+          }
+          reject(new Error(`${errorDetail} (${xhr.status})`))
+        }
+      })
+
+      xhr.addEventListener('error', () => {
+        reject(new Error('Upload failed: Network error'))
+      })
+
+      xhr.addEventListener('timeout', () => {
+        reject(new Error(`Upload timeout after ${this.UPLOAD_TIMEOUT}ms`))
+      })
+
+      xhr.send(formData)
+    })
+  }
+
   async getDocuments(filters?: DocumentFilters): Promise<Document[]> {
     const params = new URLSearchParams(filters as Record<string, string>)
-    return this.fetch(`${API_CONFIG.endpoints.documents}?${params}`)
+    const response = await this.fetch<{ documents: Document[]; total: number } | Document[]>(
+      `${API_CONFIG.endpoints.documents}?${params}`
+    )
+    // Backend returns { documents: Document[], total: number } - unwrap it
+    if (Array.isArray(response)) {
+      return response
+    }
+    return response.documents
   }
 
   async getDocument(id: string): Promise<Document> {

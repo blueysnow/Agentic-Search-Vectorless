@@ -1,14 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { useUploadDocument } from '@/lib/hooks/useDocuments'
 import { documentUploadSchema, sanitizeFilename, FILE_VALIDATION } from '@/lib/validation/document'
+import { toast } from '@/lib/hooks/use-toast'
 import type { DocumentUploadInput } from '@/lib/validation/document'
+import type { IngestResponse } from '@/lib/api/types'
 
 export function UploadForm() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [lastUploadedDoc, setLastUploadedDoc] = useState<IngestResponse | null>(null)
   const uploadMutation = useUploadDocument()
 
   const {
@@ -36,6 +40,7 @@ export function UploadForm() {
 
     // Clear validation error on successful validation
     setValidationError(null)
+    setLastUploadedDoc(null)
 
     const formData = new FormData()
     const sanitizedName = sanitizeFilename(file.name)
@@ -50,9 +55,14 @@ export function UploadForm() {
     if (data.description) formData.append('description', data.description)
 
     uploadMutation.mutate(formData, {
-      onSuccess: () => {
+      onSuccess: (response) => {
         reset()
         setSelectedFile(null)
+        setLastUploadedDoc(response)
+        toast({
+          title: 'Upload successful',
+          description: `"${response.name}" has been uploaded and is being processed.`,
+        })
       },
     })
   }
@@ -60,6 +70,8 @@ export function UploadForm() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     setSelectedFile(file || null)
+    // Clear previous upload result when selecting new file
+    setLastUploadedDoc(null)
   }
 
   return (
@@ -76,13 +88,13 @@ export function UploadForm() {
             required: 'File is required',
             onChange: handleFileChange,
           })}
-          className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+          className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 file:cursor-pointer"
         />
         {formErrors.file && (
           <p className="text-sm text-red-600 mt-1">{formErrors.file.message?.toString()}</p>
         )}
         <p className="text-xs text-muted-foreground mt-1">
-          Accepted: PDF, Markdown (.pdf, .md, .markdown) • Max: 50MB
+          Accepted: PDF, Markdown, Text (.pdf, .md, .markdown, .txt) -- Max: 50MB
         </p>
       </div>
 
@@ -136,16 +148,40 @@ export function UploadForm() {
         </div>
       )}
 
-      {uploadMutation.isSuccess && (
+      {/* Upload progress bar */}
+      {uploadMutation.isPending && uploadMutation.uploadProgress !== null && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-xs text-gray-600">
+            <span>Uploading...</span>
+            <span>{uploadMutation.uploadProgress}%</span>
+          </div>
+          <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${uploadMutation.uploadProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Success banner with chat link */}
+      {lastUploadedDoc && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
-          Document uploaded successfully! Processing will begin shortly.
+          <p className="font-medium">Document uploaded successfully!</p>
+          <p className="mt-1">Processing will begin shortly.</p>
+          <Link
+            href={`/query?documentId=${lastUploadedDoc.documentId}`}
+            className="inline-flex items-center mt-2 text-sm font-medium text-green-700 hover:text-green-900 cursor-pointer"
+          >
+            Chat about this document &rarr;
+          </Link>
         </div>
       )}
 
       <button
         type="submit"
         disabled={uploadMutation.isPending || !selectedFile}
-        className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90"
+        className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 cursor-pointer"
       >
         {uploadMutation.isPending ? 'Uploading...' : 'Upload Document'}
       </button>

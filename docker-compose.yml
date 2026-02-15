@@ -1,0 +1,72 @@
+services:
+  # MongoDB 7.0+ with replica set (required for Atlas Search indexes and transactions)
+  mongodb:
+    image: mongo:7.0
+    container_name: agentic-search-mongodb
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "127.0.0.1:27017:27017"  # Bind to localhost only for security
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: >
+        mongosh --eval "
+          try {
+            rs.status().ok
+          } catch(e) {
+            rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb:27017'}]});
+            1;
+          }
+        "
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network
+
+  # FastAPI backend (port 8000)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agentic-search-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/?replicaSet=rs0
+      - MONGODB_DATABASE=agentic_search
+      - PORT=8000
+      - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  # Next.js frontend (port 3000)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    container_name: agentic-search-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - HOSTNAME=0.0.0.0
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  app-network:
+    driver: bridge

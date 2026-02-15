@@ -20,8 +20,8 @@ class Settings(BaseSettings):
 
     # -- LLM --
     llm_provider: str = "anthropic"  # anthropic | openai
-    llm_ingestion_model: str = "gpt-4o-mini"
-    llm_retrieval_model: str = "claude-opus-4-6"
+    llm_ingestion_model: str = "claude-3-5-haiku-20241022"
+    llm_retrieval_model: str = "claude-sonnet-4-20250514"
     anthropic_api_key: str = ""
     openai_api_key: str = ""
     openai_base_url: str = ""
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     top_n_candidates: int = 5
 
     # -- API --
-    port: int = 3000
+    port: int = 8000
     log_level: str = "info"
     cors_origins: str = ""  # comma-separated origins; empty = no CORS
 

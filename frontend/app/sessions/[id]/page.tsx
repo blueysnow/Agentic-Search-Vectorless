@@ -26,7 +26,7 @@ export default function SessionDetailPage({ params }: SessionDetailPageProps) {
 
   if (!sessionId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-full bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     )
@@ -34,7 +34,7 @@ export default function SessionDetailPage({ params }: SessionDetailPageProps) {
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-full bg-gray-50 p-6">
         <div className="max-w-4xl mx-auto">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <p className="text-red-800">Failed to load conversation. It may have been deleted.</p>
@@ -52,7 +52,7 @@ export default function SessionDetailPage({ params }: SessionDetailPageProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-full bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="text-gray-600 mt-4">Loading conversation...</p>
@@ -66,7 +66,7 @@ export default function SessionDetailPage({ params }: SessionDetailPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-full bg-gray-50">
       <div className="max-w-4xl mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
@@ -92,7 +92,7 @@ export default function SessionDetailPage({ params }: SessionDetailPageProps) {
               documentIds={session.documentIds}
             />
             <button
-              onClick={() => router.push(`/chat?sessionId=${session.id}`)}
+              onClick={() => router.push(`/query?sessionId=${session.id}`)}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
             >
               Resume

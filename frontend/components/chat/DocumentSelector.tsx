@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { isValidDocumentId } from '@/lib/security'
 
 interface Document {
@@ -13,10 +13,36 @@ interface DocumentSelectorProps {
   documents: Document[]
   selectedIds: string[]
   onSelect: (ids: string[]) => void
+  isLoading?: boolean
 }
 
-export function DocumentSelector({ documents, selectedIds, onSelect }: DocumentSelectorProps) {
+export function DocumentSelector({ documents, selectedIds, onSelect, isLoading }: DocumentSelectorProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  // Click-outside handler
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen])
 
   // Vercel Pattern 7.11: Use Set for O(1) document ID lookups
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds])
@@ -46,11 +72,11 @@ export function DocumentSelector({ documents, selectedIds, onSelect }: DocumentS
     : `${selectedCount} documents selected`
 
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-50"
+        className="flex items-center justify-between w-full px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-50 cursor-pointer"
       >
         <span>{displayText}</span>
         <svg
@@ -74,7 +100,11 @@ export function DocumentSelector({ documents, selectedIds, onSelect }: DocumentS
           aria-multiselectable="true"
           className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto"
         >
-          {documents.length === 0 ? (
+          {isLoading ? (
+            <div className="px-4 py-3 text-sm text-gray-500">
+              Loading documents...
+            </div>
+          ) : documents.length === 0 ? (
             <div className="px-4 py-3 text-sm text-gray-500">
               No documents available
             </div>

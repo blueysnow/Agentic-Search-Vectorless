@@ -117,20 +117,23 @@ describe('useUploadDocument', () => {
     vi.clearAllMocks()
   })
 
-  it('should upload document successfully', async () => {
-    const mockDocument = {
+  it('should upload document with progress tracking', async () => {
+    const mockResponse = {
       documentId: 'doc1',
       name: 'Test.pdf',
-      type: 'pdf' as const,
+      status: 'processing',
       totalPages: 10,
       totalNodes: 50,
       totalTokens: 1000,
-      ingestion: { status: 'pending' as const, errors: [] },
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
     }
 
-    vi.mocked(apiClient.uploadDocument).mockResolvedValueOnce(mockDocument)
+    vi.mocked(apiClient.uploadDocumentWithProgress).mockImplementation(
+      (_formData, onProgress) => {
+        onProgress(50)
+        onProgress(100)
+        return Promise.resolve(mockResponse)
+      }
+    )
 
     const { result } = renderHook(() => useUploadDocument(), {
       wrapper: createWrapper(),
@@ -142,12 +145,12 @@ describe('useUploadDocument', () => {
     result.current.mutate(formData)
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data).toEqual(mockDocument)
+    expect(result.current.data).toEqual(mockResponse)
   })
 
   it('should handle upload errors', async () => {
     const error = new Error('File too large (413)')
-    vi.mocked(apiClient.uploadDocument).mockRejectedValueOnce(error)
+    vi.mocked(apiClient.uploadDocumentWithProgress).mockRejectedValueOnce(error)
 
     const { result } = renderHook(() => useUploadDocument(), {
       wrapper: createWrapper(),
@@ -158,5 +161,14 @@ describe('useUploadDocument', () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.error).toEqual(error)
+  })
+
+  it('should expose uploadProgress state', async () => {
+    const { result } = renderHook(() => useUploadDocument(), {
+      wrapper: createWrapper(),
+    })
+
+    // Initially null
+    expect(result.current.uploadProgress).toBeNull()
   })
 })

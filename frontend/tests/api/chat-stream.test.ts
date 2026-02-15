@@ -48,7 +48,7 @@ describe('GET /api/chat/stream', () => {
     const mockReadableStream = new ReadableStream({
       start(controller) {
         controller.enqueue(
-          new TextEncoder().encode('{"type":"content","content":"test"}\n')
+          new TextEncoder().encode('data: {"type":"content","content":"test"}\n\n')
         )
         controller.close()
       },
@@ -66,7 +66,7 @@ describe('GET /api/chat/stream', () => {
     await GET(request)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:8000/api/chat/stream',
+      'http://localhost:8000/query/stream',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
@@ -86,13 +86,14 @@ describe('GET /api/chat/stream', () => {
   it('streams SSE chunks from FastAPI backend to client', async () => {
     const mockReadableStream = new ReadableStream({
       start(controller) {
+        // Backend sends SSE format: "data: {json}\n\n"
         controller.enqueue(
-          new TextEncoder().encode('{"type":"thinking","content":"Checking..."}\n')
+          new TextEncoder().encode('data: {"type":"thinking","content":"Checking..."}\n\n')
         )
         controller.enqueue(
-          new TextEncoder().encode('{"type":"content","content":"Answer"}\n')
+          new TextEncoder().encode('data: {"type":"content","content":"Answer"}\n\n')
         )
-        controller.enqueue(new TextEncoder().encode('{"type":"done"}\n'))
+        controller.enqueue(new TextEncoder().encode('data: {"type":"done"}\n\n'))
         controller.close()
       },
     })
@@ -125,9 +126,10 @@ describe('GET /api/chat/stream', () => {
     }
 
     const fullText = chunks.join('')
-    expect(fullText).toContain('data: {"type":"thinking","content":"Checking..."}')
-    expect(fullText).toContain('data: {"type":"content","content":"Answer"}')
-    expect(fullText).toContain('data: {"type":"done"}')
+    // Proxy strips SSE "data: " prefix, re-wraps as SSE for client
+    expect(fullText).toContain('"type":"thinking"')
+    expect(fullText).toContain('"type":"content"')
+    expect(fullText).toContain('"type":"done"')
   })
 
   it('returns error stream if FastAPI request fails', async () => {
@@ -216,6 +218,9 @@ describe('GET /api/chat/stream', () => {
   it('omits session_id from backend request if not provided', async () => {
     const mockReadableStream = new ReadableStream({
       start(controller) {
+        controller.enqueue(
+          new TextEncoder().encode('data: {"type":"done"}\n\n')
+        )
         controller.close()
       },
     })

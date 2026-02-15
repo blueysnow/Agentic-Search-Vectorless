@@ -109,6 +109,61 @@ describe('Client API error handling', () => {
     })
   })
 
+  describe('getDocuments response unwrapping', () => {
+    it('should unwrap documents array from backend wrapper response', async () => {
+      const mockDocs = [
+        { documentId: 'doc-1', name: 'Test', type: 'pdf', totalPages: 5, totalNodes: 10, totalTokens: 100, ingestion: { status: 'completed', errors: [] }, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+      ]
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ documents: mockDocs, total: 1 }),
+      })
+
+      const result = await apiClient.getDocuments()
+      // Should return the documents array, not the wrapper object
+      expect(Array.isArray(result)).toBe(true)
+      expect(result).toHaveLength(1)
+      expect(result[0].documentId).toBe('doc-1')
+    })
+
+    it('should handle direct array response gracefully', async () => {
+      const mockDocs = [
+        { documentId: 'doc-2', name: 'Direct', type: 'pdf', totalPages: 3, totalNodes: 5, totalTokens: 50, ingestion: { status: 'completed', errors: [] }, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
+      ]
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockDocs,
+      })
+
+      const result = await apiClient.getDocuments()
+      expect(Array.isArray(result)).toBe(true)
+      expect(result[0].documentId).toBe('doc-2')
+    })
+  })
+
+  describe('uploadDocument return type', () => {
+    it('should return IngestResponse with documentId, name, status, totalPages, totalNodes, totalTokens', async () => {
+      const ingestResponse = {
+        documentId: 'doc-new',
+        name: 'uploaded.pdf',
+        status: 'processing',
+        totalPages: 12,
+        totalNodes: 45,
+        totalTokens: 5000,
+      }
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ingestResponse,
+      })
+
+      const formData = new FormData()
+      const result = await apiClient.uploadDocument(formData)
+      expect(result.documentId).toBe('doc-new')
+      expect(result.name).toBe('uploaded.pdf')
+      expect(result.status).toBe('processing')
+    })
+  })
+
   // SF-011: Timeout test for regular fetch
   describe('fetch timeouts', () => {
     it('should have default timeout configured', () => {

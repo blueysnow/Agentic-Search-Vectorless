@@ -30,12 +30,18 @@ describe('documentUploadSchema', () => {
     }
   })
 
-  it('should reject invalid file type', () => {
+  it('should validate valid Text file', () => {
     const file = new File(['content'], 'test.txt', { type: 'text/plain' })
+    const result = documentUploadSchema.safeParse({ file })
+    expect(result.success).toBe(true)
+  })
+
+  it('should reject invalid file type', () => {
+    const file = new File(['content'], 'test.exe', { type: 'application/octet-stream' })
     const result = documentUploadSchema.safeParse({ file })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.errors[0].message).toContain('PDF or Markdown')
+      expect(result.error.errors[0].message).toContain('PDF, Markdown, or Text')
     }
   })
 
@@ -93,8 +99,13 @@ describe('validateFileType', () => {
     expect(validateFileType(file)).toBe(true)
   })
 
-  it('should reject invalid file type', () => {
+  it('should validate Text by MIME type', () => {
     const file = new File(['content'], 'test.txt', { type: 'text/plain' })
+    expect(validateFileType(file)).toBe(true)
+  })
+
+  it('should reject invalid file type', () => {
+    const file = new File(['content'], 'test.exe', { type: 'application/octet-stream' })
     expect(validateFileType(file)).toBe(false)
   })
 })

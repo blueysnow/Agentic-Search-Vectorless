@@ -1,7 +1,7 @@
 export interface Document {
   documentId: string
   name: string
-  type: 'pdf' | 'markdown'
+  type: 'pdf' | 'markdown' | 'text'
   domain?: string
   description?: string
   totalPages: number
@@ -61,6 +61,15 @@ export interface QueryResponse {
   turnNumber: number
   answer: string
   retrievalTrace: Turn['retrievalTrace']
+}
+
+export interface IngestResponse {
+  documentId: string
+  name: string
+  status: string
+  totalPages: number
+  totalNodes: number
+  totalTokens: number
 }
 
 export interface TreeNode {

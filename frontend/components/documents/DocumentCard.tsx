@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api/client'
 import { DOCUMENTS_QUERY_KEY } from '@/lib/hooks/useDocuments'
@@ -11,6 +12,7 @@ interface DocumentCardProps {
 }
 
 export function DocumentCard({ document }: DocumentCardProps) {
+  const router = useRouter()
   const queryClient = useQueryClient()
 
   // Pattern 2.5: Hover preload
@@ -30,6 +32,13 @@ export function DocumentCard({ document }: DocumentCardProps) {
   }
 
   const statusColor = statusColors[document.ingestion.status]
+  const isCompleted = document.ingestion.status === 'completed'
+
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    router.push(`/query?documentId=${document.documentId}`)
+  }
 
   return (
     <Link
@@ -40,11 +49,23 @@ export function DocumentCard({ document }: DocumentCardProps) {
     >
       <div className="flex justify-between items-start mb-2">
         <h3 className="font-semibold text-lg truncate flex-1">{document.name}</h3>
-        <span
-          className={`px-2 py-1 text-xs font-medium rounded border ${statusColor}`}
-        >
-          {document.ingestion.status}
-        </span>
+        <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+          {isCompleted && (
+            <button
+              type="button"
+              onClick={handleChatClick}
+              className="px-2.5 py-1 text-xs font-medium rounded bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 cursor-pointer transition-colors"
+              aria-label={`Chat about ${document.name}`}
+            >
+              Chat
+            </button>
+          )}
+          <span
+            className={`px-2 py-1 text-xs font-medium rounded border ${statusColor}`}
+          >
+            {document.ingestion.status}
+          </span>
+        </div>
       </div>
 
       {document.description && (

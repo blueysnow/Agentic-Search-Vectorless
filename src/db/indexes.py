@@ -1,11 +1,13 @@
 """Create all regular MongoDB indexes for the five collections.
 
-Matches plan section 2 exactly (13 indexes).
+Matches plan section 2 exactly (13 indexes), plus a text index for
+MongoDB Community Edition fallback search.
 """
 
 from __future__ import annotations
 
 import pymongo
+from pymongo.errors import OperationFailure
 
 from src.db.collections import (
     documents_col,
@@ -13,6 +15,9 @@ from src.db.collections import (
     pages_col,
     retrieval_sessions_col,
 )
+from src.utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 def ensure_indexes() -> list[str]:
@@ -119,4 +124,35 @@ def ensure_indexes() -> list[str]:
         )
     )
 
+    return created
+
+
+def ensure_text_index() -> list[str]:
+    """Create a MongoDB text index on the nodes collection for Community Edition fallback.
+
+    This enables $text queries as an alternative to Atlas Search ($search) which
+    is only available on MongoDB Atlas. The text index covers title, summary, and
+    keywords fields.
+
+    Returns a list of created index names. Idempotent -- silently handles
+    'index already exists' errors.
+    """
+    created: list[str] = []
+    n = nodes_col()
+    try:
+        name = n.create_index(
+            [
+                ("title", "text"),
+                ("summary", "text"),
+                ("keywords", "text"),
+            ],
+            name="nodes_text_search",
+            weights={"title": 10, "summary": 5, "keywords": 3},
+            default_language="english",
+        )
+        created.append(name)
+        logger.info("text_index_created", index_name=name)
+    except OperationFailure as exc:
+        # Index already exists or conflicting index -- not fatal
+        logger.info("text_index_already_exists", error=str(exc))
     return created

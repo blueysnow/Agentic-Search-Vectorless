@@ -1,6 +1,6 @@
 """PDF text extraction -- adapted from reference utils.py get_page_tokens().
 
-Supports two backends (same as reference): PyPDF2 and PyMuPDF.
+Supports two backends (same as reference): pypdf and PyMuPDF.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ def parse_pdf(
     pdf_path: str | Path | BytesIO,
     *,
     model: str = "gpt-4o",
-    backend: str = "PyPDF2",
+    backend: str = "pypdf",
 ) -> list[ParsedPage]:
     """Parse a PDF into a list of ParsedPage objects.
 
@@ -49,7 +49,7 @@ def parse_pdf(
     Args:
         pdf_path: File path or BytesIO stream.
         model: Model name for tiktoken encoding.
-        backend: "PyPDF2" or "PyMuPDF".
+        backend: "pypdf" or "PyMuPDF".
 
     Raises:
         PDFParseError: If the PDF is corrupt, encrypted, or otherwise unreadable.
@@ -62,11 +62,11 @@ def parse_pdf(
 
     pages: list[ParsedPage] = []
 
-    if backend == "PyPDF2":
-        import PyPDF2
+    if backend == "pypdf":
+        import pypdf
 
         try:
-            reader = PyPDF2.PdfReader(pdf_path)
+            reader = pypdf.PdfReader(pdf_path)
             if reader.is_encrypted:
                 raise PDFParseError(
                     "PDF is encrypted and cannot be read without a password"
@@ -74,14 +74,14 @@ def parse_pdf(
         except PDFParseError:
             raise
         except Exception as exc:
-            raise PDFParseError(f"Failed to open PDF with PyPDF2: {exc}") from exc
+            raise PDFParseError(f"Failed to open PDF with pypdf: {exc}") from exc
 
         for page_num in range(len(reader.pages)):
             try:
                 text = reader.pages[page_num].extract_text() or ""
             except Exception as exc:
                 logger.warning(
-                    "PyPDF2: failed to extract text from page %d: %s", page_num + 1, exc
+                    "pypdf: failed to extract text from page %d: %s", page_num + 1, exc
                 )
                 text = ""
             token_count = len(enc.encode(text))
@@ -153,10 +153,10 @@ def get_text_of_pages(
 
 def get_pdf_title(pdf_path: str | Path) -> str:
     """Extract the PDF title from metadata. Falls back to 'Untitled'."""
-    import PyPDF2
+    import pypdf
 
     try:
-        reader = PyPDF2.PdfReader(str(pdf_path))
+        reader = pypdf.PdfReader(str(pdf_path))
         meta = reader.metadata
         return meta.title if meta and meta.title else "Untitled"
     except Exception:

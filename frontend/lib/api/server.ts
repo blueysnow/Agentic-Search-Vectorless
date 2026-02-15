@@ -31,7 +31,12 @@ export const fetchDocuments = cache(
         `Failed to fetch documents: ${res.status} ${res.statusText}`
       )
     }
-    return res.json()
+    const data = await res.json()
+    // Backend returns { documents: Document[], total: number } - unwrap it
+    if (Array.isArray(data)) {
+      return data
+    }
+    return data.documents
   }
 )
 

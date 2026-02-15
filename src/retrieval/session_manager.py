@@ -42,6 +42,38 @@ def create_session(
     return session
 
 
+def list_sessions(
+    document_id: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> list[RetrievalSession]:
+    """List sessions with optional filtering."""
+    query: dict = {}
+    if document_id:
+        query["documentId"] = document_id
+    cursor = (
+        retrieval_sessions_col()
+        .find(query)
+        .sort("createdAt", -1)
+        .skip(offset)
+        .limit(limit)
+    )
+    results = []
+    for doc in cursor:
+        doc.pop("_id", None)
+        results.append(RetrievalSession(**doc))
+    return results
+
+
+def delete_session(session_id: str) -> bool:
+    """Delete a session from MongoDB by session_id.
+
+    Returns True if a session was deleted, False if not found.
+    """
+    result = retrieval_sessions_col().delete_one({"sessionId": session_id})
+    return result.deleted_count > 0
+
+
 def get_session(session_id: str) -> RetrievalSession | None:
     """Load a session from MongoDB by session_id.
 

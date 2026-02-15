@@ -23,7 +23,7 @@ export async function GET(
     const timeoutId = setTimeout(() => abortController.abort(), 10000)
 
     try {
-      const response = await fetch(`${apiUrl}/api/sessions/${sessionId}`, {
+      const response = await fetch(`${apiUrl}/sessions/${sessionId}`, {
         signal: abortController.signal,
       })
 
@@ -35,7 +35,18 @@ export async function GET(
       }
 
       const data = await response.json()
-      return NextResponse.json(data)
+      // Transform backend SessionResponse to frontend Session format
+      const session = {
+        id: data.sessionId,
+        createdAt: data.createdAt,
+        updatedAt: data.updatedAt,
+        documentIds: data.documentId ? [data.documentId] : [],
+        messages: (data.turns || []).flatMap((t: { query?: string; answer?: string; timestamp?: string }, i: number) => [
+          ...(t.query ? [{ id: `turn-${i}-user`, role: 'user' as const, content: t.query, timestamp: t.timestamp }] : []),
+          ...(t.answer ? [{ id: `turn-${i}-assistant`, role: 'assistant' as const, content: t.answer, timestamp: t.timestamp }] : []),
+        ]),
+      }
+      return NextResponse.json(session)
     } finally {
       clearTimeout(timeoutId)
     }
@@ -79,7 +90,7 @@ export async function DELETE(
     const timeoutId = setTimeout(() => abortController.abort(), 10000)
 
     try {
-      const response = await fetch(`${apiUrl}/api/sessions/${sessionId}`, {
+      const response = await fetch(`${apiUrl}/sessions/${sessionId}`, {
         method: 'DELETE',
         signal: abortController.signal,
       })
