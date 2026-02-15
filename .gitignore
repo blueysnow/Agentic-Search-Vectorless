@@ -37,3 +37,9 @@ htmlcov/
 logs/
 *.log
 reference/PageIndex/
+
+# Process IDs
+*.pid
+
+# Temporary files
+=*
