@@ -319,6 +319,118 @@ class TestAtlasSearch:
         for field in ["nodeId", "title", "summary", "depth", "score"]:
             assert field in project
 
+    def test_build_search_pipeline_phrase_clauses_multi_word(self):
+        """Multi-word queries include phrase clauses for title and summary."""
+        from src.retrieval.atlas_search import (
+            PHRASE_BOOST,
+            build_search_pipeline,
+        )
+
+        pipeline = build_search_pipeline("Revenue in Germany", "doc1")
+        should = pipeline[0]["$search"]["compound"]["should"]
+        # Find PHRASE_BOOST-level phrase clauses (exact full-query match, not shingles)
+        phrase_clauses = [
+            c
+            for c in should
+            if "phrase" in c and c["phrase"]["score"]["boost"]["value"] == PHRASE_BOOST
+        ]
+        assert len(phrase_clauses) == 2, "Expected 2 phrase clauses (title + summary)"
+        # Phrase clause for title
+        title_phrase = [c for c in phrase_clauses if c["phrase"]["path"] == "title"]
+        assert len(title_phrase) == 1
+        assert title_phrase[0]["phrase"]["query"] == "Revenue in Germany"
+        assert title_phrase[0]["phrase"]["score"]["boost"]["value"] == PHRASE_BOOST
+        # Phrase clause for summary
+        summary_phrase = [c for c in phrase_clauses if c["phrase"]["path"] == "summary"]
+        assert len(summary_phrase) == 1
+        assert summary_phrase[0]["phrase"]["score"]["boost"]["value"] == PHRASE_BOOST
+
+    def test_build_search_pipeline_no_phrase_for_single_word(self):
+        """Single-word queries do not include phrase clauses (phrase is meaningless)."""
+        from src.retrieval.atlas_search import build_search_pipeline
+
+        pipeline = build_search_pipeline("revenue", "doc1")
+        should = pipeline[0]["$search"]["compound"]["should"]
+        phrase_clauses = [c for c in should if "phrase" in c]
+        assert (
+            len(phrase_clauses) == 0
+        ), "Single-word query should not have phrase clauses"
+
+    def test_build_search_pipeline_phrase_boost_higher_than_text(self):
+        """PHRASE_BOOST must be higher than TITLE_BOOST (exact phrase match > individual words)."""
+        from src.retrieval.atlas_search import (
+            PHRASE_BOOST,
+            TITLE_BOOST,
+        )
+
+        assert (
+            PHRASE_BOOST > TITLE_BOOST
+        ), f"PHRASE_BOOST ({PHRASE_BOOST}) must be higher than TITLE_BOOST ({TITLE_BOOST})"
+
+    def test_build_search_pipeline_shingle_clauses(self):
+        """Queries with 3+ words include shingle (bigram) phrase clauses."""
+        from src.retrieval.atlas_search import (
+            SHINGLE_BOOST,
+            build_search_pipeline,
+        )
+
+        pipeline = build_search_pipeline("revenue growth in Germany Q3", "doc1")
+        should = pipeline[0]["$search"]["compound"]["should"]
+        # Find shingle phrase clauses (boost value == SHINGLE_BOOST)
+        shingle_clauses = [
+            c
+            for c in should
+            if "phrase" in c and c["phrase"]["score"]["boost"]["value"] == SHINGLE_BOOST
+        ]
+        # 5 words -> 4 shingles, each on title and summary -> 8 shingle clauses
+        assert (
+            len(shingle_clauses) >= 4
+        ), f"Expected at least 4 shingle phrase clauses, got {len(shingle_clauses)}"
+
+    def test_build_search_pipeline_no_shingles_for_two_words(self):
+        """Two-word queries already produce a single phrase -- no shingles needed."""
+        from src.retrieval.atlas_search import (
+            SHINGLE_BOOST,
+            build_search_pipeline,
+        )
+
+        pipeline = build_search_pipeline("revenue growth", "doc1")
+        should = pipeline[0]["$search"]["compound"]["should"]
+        shingle_clauses = [
+            c
+            for c in should
+            if "phrase" in c and c["phrase"]["score"]["boost"]["value"] == SHINGLE_BOOST
+        ]
+        assert (
+            len(shingle_clauses) == 0
+        ), "Two-word queries should not generate shingle clauses"
+
+    def test_generate_shingles_basic(self):
+        """_generate_shingles produces overlapping bigrams from a query."""
+        from src.retrieval.atlas_search import _generate_shingles
+
+        shingles = _generate_shingles("revenue growth in Germany Q3")
+        assert shingles == [
+            "revenue growth",
+            "growth in",
+            "in Germany",
+            "Germany Q3",
+        ]
+
+    def test_generate_shingles_two_words(self):
+        """_generate_shingles returns empty list for two-word query (already a phrase)."""
+        from src.retrieval.atlas_search import _generate_shingles
+
+        shingles = _generate_shingles("revenue growth")
+        assert shingles == []
+
+    def test_generate_shingles_one_word(self):
+        """_generate_shingles returns empty list for single-word query."""
+        from src.retrieval.atlas_search import _generate_shingles
+
+        shingles = _generate_shingles("revenue")
+        assert shingles == []
+
     @pytest.mark.asyncio
     async def test_atlas_search_handles_exception(self):
         from src.retrieval.atlas_search import atlas_search

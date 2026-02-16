@@ -15,13 +15,13 @@ User query  -->  Atlas Search (fast keyword hit)  ----+       |
 
 Vector search works by converting text into numbers and finding "similar" numbers. It's good, but it has real problems:
 
-- **It's a black box.** You can't explain _why_ result #3 ranked higher than result #7.
-- **It loses structure.** A 200-page PDF becomes a flat bag of chunks. Chapter 1 and Appendix G look the same.
-- **It hallucinates relevance.** "Revenue in Germany" might match "Revenue in Germany's neighboring countries" because the vectors are close.
+- **It's a black box.** You can't explain _why_ result #3 ranked higher than result #7. Cosine similarity gives you a number, not a reason.
+- **It loses structure.** A 200-page PDF becomes a flat bag of chunks. Chapter 1 and Appendix G look the same. The table of contents, section hierarchy, and page flow are gone.
+- **It can't navigate.** When a result says "See Appendix G" or "Refer to Table 3.2", vector search has no way to follow that reference. The structural connections between sections are lost at embedding time.
 
 This system takes a different approach: **structure the document like a human would read it, then let an LLM navigate that structure.**
 
-Every retrieval step is traceable. The system tells you: "I looked at the Table of Contents, picked Chapter 3 (European Markets), drilled into Section 3.2 (Germany), and read pages 45-48." You can verify every step.
+Every retrieval step is fully traceable. The system tells you: "I looked at the Table of Contents, picked Chapter 3 (European Markets), drilled into Section 3.2 (Germany), and read pages 45-48." You can verify every step. No hidden similarity scores -- just a clear navigation path through the document's own structure.
 
 ## How It Works
 
@@ -307,7 +307,7 @@ pip install -e ".[dev]"
 mongod --replSet rs0
 
 # Run backend
-uvicorn src.api.main:app --reload --port 8000
+uvicorn src.api.server:create_app --factory --reload --port 8000
 ```
 
 **Frontend:**
@@ -317,6 +317,18 @@ cd frontend
 npm install
 npm run dev
 ```
+
+**With `$search` support (Atlas Search on Community Edition):**
+
+```bash
+# Start with the search profile (adds mongot for native $search)
+docker compose --profile search up
+
+# Or with the override file for full control:
+docker compose -f docker-compose.yml -f docker-compose.search.override.yml --profile search up
+```
+
+This starts MongoDB Community 8.2+ with the `mongot` binary, enabling native `$search` aggregation pipelines. Without the search profile, the system automatically falls back to `$text` indexes.
 
 ### Environment Variables
 
@@ -412,7 +424,7 @@ frontend/               Next.js 15 + React 19 UI
   app/documents/        Document upload + tree visualization
   app/sessions/         Session history + replay
 
-tests/                  453 backend tests, 300 frontend tests
+tests/                  471 backend tests, 300 frontend tests
 ```
 
 ## Tech Stack

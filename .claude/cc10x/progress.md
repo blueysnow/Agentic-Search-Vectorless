@@ -1,9 +1,22 @@
 <!-- CC10x Memory File - DO NOT manually edit section headers -->
 
 ## Current Workflow
-BUILD: UX Refactor — COMPLETE
+BUILD: Slack Feedback Improvements — COMPLETED
 
 ## Tasks
+- [Done] component-builder: Implement Slack feedback fixes — 6 items (Task 14)
+- [Done] code-reviewer: Review Slack feedback — APPROVE 92% (Task 15)
+- [Done] silent-failure-hunter: Hunt Slack feedback edge cases — CLEAN (Task 16)
+- [Done] integration-verifier: 7/7 scenarios PASS (Task 17)
+- [Done] Memory update: Persist Slack feedback learnings (Task 18)
+- [Done] component-builder: Implement mongot Docker integration (Task 5)
+- [Done] code-reviewer: Review mongot implementation — APPROVE (Task 6)
+- [Done] silent-failure-hunter: Hunt mongot edge cases — ISSUES_FOUND (Task 7)
+- [Done] REM-FIX: Fix Docker search infrastructure — 7 issues (3 CRITICAL + 4 HIGH) (Task 10)
+- [Done] code-reviewer: Re-review after REM-FIX — APPROVE 92% (Task 11)
+- [Done] silent-failure-hunter: Re-hunt after REM-FIX — CLEAN (Task 12)
+- [Done] integration-verifier: 12/12 scenarios PASS (Task 8)
+- [Done] Memory update: Persist mongot build learnings (Task 9)
 - [Done] component-builder: UX refactor implementation finalized (Task 16)
 - [Done] code-reviewer: Review UX refactor — CHANGES_REQUESTED (Task 17)
 - [Done] silent-failure-hunter: Hunt UX edge cases — ISSUES_FOUND (Task 18)
@@ -26,6 +39,16 @@ BUILD: UX Refactor — COMPLETE
 - [Prior] integration-verifier: 10/10 scenarios PASS (Task 5)
 
 ## Completed
+- [x] Task-14 Slack feedback: 6 improvements (env defaults, phrase/shingle search, README fixes). 471 backend + 300 frontend. TDD RED=1 GREEN=0.
+- [x] Task-10 REM-FIX: 7 issues from code-reviewer + silent-failure-hunter (3 CRITICAL, 4 HIGH). 463 backend, 300 frontend, 3 compose configs valid.
+- [x] Task-5 mongot BUILD: 4 phases, 15 tasks all implemented (458 backend, 300 frontend, tsc clean)
+- [x] Phase 1: docker/search/ (setup-generator.sh, mongod.conf, mongot.conf, init-mongod.sh)
+- [x] Phase 1: docker-compose.yml search profile + docker-compose.search.override.yml
+- [x] Phase 2: ensure_search_index() in src/db/indexes.py (TDD 5 tests)
+- [x] Phase 2: Wired into lifespan in src/api/server.py
+- [x] Phase 3: Auth (mongotUser + backendUser in init-mongod.sh, MONGODB_URI with auth in override)
+- [x] Phase 4: start-search.sh + verify-search.sh + .gitignore updated
+- [x] Plan saved - docs/plans/2026-02-16-mongot-integration-plan.md (4 phases, 15 tasks, 7 risks)
 - [UX-BUILD] Full UX refactor: Sidebar + AppShell, ChatClient self-fetch, document selector, upload progress, session CRUD, page consolidation
 - [Task-24] REM-FIX #2: Session detail transform, DELETE endpoint + CORS, pagination forwarding, dead date filter removed
 - [Task-21] REM-FIX #1: 2 CRITICAL + 5 HIGH issues fixed, 26/26 tests pass, tsc clean, backend import verified
@@ -54,6 +77,14 @@ BUILD: UX Refactor — COMPLETE
 - [REM-FIX] Dead code removed, batch query limited
 
 ## Verification
+- **Task-14 Slack Feedback:** RED exit=1 (7 failures: ImportError for PHRASE_BOOST/SHINGLE_BOOST/_generate_shingles), GREEN exit=0 (18/18 TestAtlasSearch pass), Full suite: 471 passed + 11 skipped (exit 0)
+- **Task-8 E2E (Final):** 12/12 scenarios PASS — 3 compose configs (exit 0), backend 463+11skip (exit 0), frontend 300/300 (exit 0), tsc clean (exit 0), next build 11 routes (exit 0), search index 5/5 (exit 0), text fallback 15/15 (exit 0), import OK (exit 0), shell scripts valid (shebangs + permissions), .gitignore complete
+- **Task-10 REM-FIX:** RED exit=1 (3 failures: BUILDING state, lifespan independence x2), GREEN exit=0 (5/5 new tests pass)
+- **Task-10 REM-FIX:** Backend 463 passed + 11 skipped (exit 0), Frontend 300/300 (exit 0)
+- **Task-10 REM-FIX:** `docker compose config --quiet` exit 0, `docker compose --profile search config --quiet` exit 0, `docker compose -f docker-compose.yml -f docker-compose.search.override.yml --profile search config --quiet` exit 0
+- **Task-5 mongot BUILD:** Backend 458 passed + 11 skipped (exit 0), Frontend 300/300 (exit 0), tsc --noEmit exit 0
+- **Task-5 TDD:** RED exit=1 (5 ImportError failures), GREEN exit=0 (5/5 pass)
+- **Task-5 Docker configs:** default config exit 0, search profile config exit 0, search override config exit 0
 - **UX BUILD Final:** next build exit 0 (11 routes), tsc clean, 300/300 tests pass (40 files), backend import OK
 - **Task-24 REM-FIX #2:** tsc clean, use-sessions 10/10 tests pass, next build clean, sessions router 3 routes
 - **Task-21 REM-FIX #1:** tsc --noEmit exit 0, vitest 26/26 pass exit 0, python import exit 0
@@ -80,4 +111,4 @@ BUILD: UX Refactor — COMPLETE
 - Code inspection: All 8 REM-FIX items confirmed in source
 
 ## Last Updated
-2026-02-15 - UX Refactor BUILD COMPLETE: 300/300 frontend tests, next build 11 routes, 2 REM-FIX rounds, all CRITICALs resolved
+2026-02-16 - Task-14 Slack Feedback COMPLETE: 6 improvements, 8 new tests, 471 backend + 300 frontend. Previous: 12/12 E2E scenarios PASS. 463 backend + 300 frontend tests. Full chain: builder → [reviewer ∥ hunter] → REM-FIX → [re-reviewer ∥ re-hunter] → verifier

@@ -23,9 +23,32 @@ TITLE_BOOST = 10.0
 SUMMARY_BOOST = 5.0
 KEYWORD_BOOST = 3.0
 
+# Phrase boost for exact multi-word matches (higher than individual word boosts)
+PHRASE_BOOST = 15.0
+
+# Shingle (bigram) phrase boost for overlapping word pairs
+SHINGLE_BOOST = 7.0
+
 # Search backend: "atlas" (Atlas Search $search) or "text" ($text fallback).
 # Set at startup by detect_search_backend() or manually for testing.
 _search_backend: str = "atlas"
+
+
+def _generate_shingles(query: str) -> list[str]:
+    """Break a multi-word query into overlapping bigrams (shingles).
+
+    Only generates shingles when query has 3+ words. Two-word queries are
+    already a single phrase, and single-word queries have no pairs.
+
+    Examples:
+        "revenue growth in Germany Q3" -> ["revenue growth", "growth in", "in Germany", "Germany Q3"]
+        "revenue growth" -> []
+        "revenue" -> []
+    """
+    words = query.split()
+    if len(words) < 3:
+        return []
+    return [f"{words[i]} {words[i + 1]}" for i in range(len(words) - 1)]
 
 
 def build_search_pipeline(
@@ -92,6 +115,50 @@ def build_search_pipeline(
         }
     )
 
+    # Phrase clauses for exact multi-word matches (higher boost than individual words)
+    words = query.split()
+    if len(words) >= 2:
+        should_clauses.append(
+            {
+                "phrase": {
+                    "query": query,
+                    "path": "title",
+                    "score": {"boost": {"value": PHRASE_BOOST}},
+                }
+            }
+        )
+        should_clauses.append(
+            {
+                "phrase": {
+                    "query": query,
+                    "path": "summary",
+                    "score": {"boost": {"value": PHRASE_BOOST}},
+                }
+            }
+        )
+
+    # Shingle (bigram) phrase clauses for overlapping word pairs
+    shingles = _generate_shingles(query)
+    for shingle in shingles:
+        should_clauses.append(
+            {
+                "phrase": {
+                    "query": shingle,
+                    "path": "title",
+                    "score": {"boost": {"value": SHINGLE_BOOST}},
+                }
+            }
+        )
+        should_clauses.append(
+            {
+                "phrase": {
+                    "query": shingle,
+                    "path": "summary",
+                    "score": {"boost": {"value": SHINGLE_BOOST}},
+                }
+            }
+        )
+
     must_clauses: list[dict[str, Any]] = [
         {"equals": {"path": "documentId", "value": document_id}}
     ]
@@ -142,9 +209,18 @@ def detect_search_backend() -> str:
         "atlas" or "text"
     """
     try:
-        existing = {idx["name"] for idx in nodes_col().list_search_indexes()}
-        if "nodes_fulltext" in existing:
-            return "atlas"
+        indexes = list(nodes_col().list_search_indexes())
+        for idx in indexes:
+            if idx["name"] == "nodes_fulltext":
+                status = idx.get("status", "READY")
+                if status in ("READY", "STEADY"):
+                    return "atlas"
+                logger.info(
+                    "atlas_search_index_not_ready",
+                    backend="text",
+                    status=status,
+                )
+                return "text"
         logger.info("atlas_search_index_not_found", backend="text")
         return "text"
     except Exception:

@@ -1,10 +1,22 @@
 <!-- CC10x Memory File - DO NOT manually edit section headers -->
 
 ## Common Gotchas
+- Atlas Search `phrase` operator needs `score.boost.value` -- PHRASE_BOOST > TITLE_BOOST > SHINGLE_BOOST > SUMMARY_BOOST > KEYWORD_BOOST
+- Shingles only for 3+ word queries -- 2-word queries are already a single phrase, 1-word queries have no pairs
+- .env.example defaults MUST match the default LLM_PROVIDER (anthropic) -- gpt-4o-mini with anthropic = 404
+- mongodb-community-server:8.0.4-ubi9 supports /docker-entrypoint-initdb.d/ -- init scripts run inside container on localhost without auth (first startup only)
+- Alpine 3.19 lacks openssl binary -- must `apk add --no-cache openssl` before using openssl rand/etc
+- detect_search_backend() must check index status field -- BUILDING/PENDING state means $search returns empty results
+- Server lifespan index operations: use separate try/except for each (ensure_indexes, ensure_text_index, ensure_search_index) to prevent cascading failures
+- MongoDB init container anti-pattern: separate init container connects to remote host, bypassing localhost exception for user creation
+- pymongo SearchIndexModel: attributes accessible via .document dict (e.g., .document["name"]), NOT .name directly
+- mongot requires keyFile auth -- when security.keyFile is set, ALL client connections need auth (not just mongot). Create backendUser with readWrite role.
+- Docker Compose profiles: --profile search starts profile-gated AND non-profile services. Both mongodb and mongodb-search will start. Use different host ports (27017 vs 27018).
+- pymongo create_search_index() requires SearchIndexModel from pymongo.operations (pymongo 4.7+)
 - Frontend proxy URLs must match backend route mount points exactly -- backend has /sessions NOT /api/sessions
 - Always verify list endpoints exist before building list UIs -- frontend sessions page called GET /sessions but backend only had GET /sessions/{id}
 - When adding accepted file types, update ALL test files that test rejection (test files, integration tests, error messages)
-- MongoDB Community lacks $search (Atlas Search) -- use $text with text index as fallback
+- $search works on Community Edition 8.2+ with mongot binary -- $text fallback is for when search indexes aren't configured (not Community-specific)
 - NEXT_PUBLIC_API_URL must be Docker build ARG, not runtime ENV -- Next.js bakes it into JS at build time
 - Browser connects to localhost:8000 (not docker network name) -- CORS must allow localhost:3000
 - Next.js standalone output needs .next/static and public/ copied separately in Dockerfile
@@ -66,3 +78,8 @@
 - When adding accepted file types, update ALL rejection tests to use truly invalid types (.exe), not recently-accepted ones (.txt)
 - New list endpoints follow pattern: manager query fn + Pydantic models + FastAPI route + frontend proxy transform
 - Frontend proxy transforms backend field names (sessionId->id, documentId->documentIds[], totalTurns->messageCount)
+- docker compose config --quiet validates compose file syntax including profiles and overrides without starting containers
+- macOS stat for file permissions: `stat -f "%Sp"` (not `stat -c` which is Linux-only)
+- Shingle clause explosion: N-word query → 2*(N-1) should clauses. Cap shingles for very long queries (>20 words) in production
+- README test counts become stale when tests added -- always update count in README after adding new tests
+- Atlas Search `phrase` operator syntax: {"phrase": {"query": "...", "path": "...", "score": {"boost": {"value": N}}}}

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import pymongo
 from pymongo.errors import OperationFailure
+from pymongo.operations import SearchIndexModel
 
 from src.db.collections import (
     documents_col,
@@ -155,4 +156,71 @@ def ensure_text_index() -> list[str]:
     except OperationFailure as exc:
         # Index already exists or conflicting index -- not fatal
         logger.info("text_index_already_exists", error=str(exc))
+    return created
+
+
+def ensure_search_index() -> list[str]:
+    """Create the nodes_fulltext search index for Atlas Search / mongot.
+
+    Uses pymongo's create_search_index() to programmatically create a search
+    index with explicit field mappings for title, summary, keywords, documentId,
+    and contentType. This enables $search aggregation queries.
+
+    The function is idempotent:
+    - Checks if index already exists via list_search_indexes()
+    - Handles 'duplicate index' errors gracefully
+    - Returns empty list if mongot is not available (non-fatal)
+
+    Returns:
+        List of created/existing search index names.
+    """
+    created: list[str] = []
+    n = nodes_col()
+    index_name = "nodes_fulltext"
+
+    try:
+        # Check if index already exists
+        existing = {idx["name"] for idx in n.list_search_indexes()}
+        if index_name in existing:
+            logger.info("search_index_already_exists", index_name=index_name)
+            return [index_name]
+    except Exception:
+        # list_search_indexes not supported (no mongot) -- try creating anyway
+        logger.debug("list_search_indexes_unavailable", exc_info=True)
+
+    try:
+        model = SearchIndexModel(
+            name=index_name,
+            definition={
+                "mappings": {
+                    "dynamic": False,
+                    "fields": {
+                        "title": [{"type": "string", "analyzer": "lucene.standard"}],
+                        "summary": [{"type": "string", "analyzer": "lucene.standard"}],
+                        "keywords": [{"type": "string", "analyzer": "lucene.standard"}],
+                        "documentId": [
+                            {"type": "string", "analyzer": "lucene.keyword"}
+                        ],
+                        "contentType": [
+                            {"type": "string", "analyzer": "lucene.keyword"}
+                        ],
+                    },
+                }
+            },
+        )
+        result = n.create_search_index(model)
+        created.append(result)
+        logger.info("search_index_created", index_name=result)
+    except OperationFailure as exc:
+        if exc.code == 68 or "Duplicate" in str(exc):
+            logger.info("search_index_duplicate", index_name=index_name, error=str(exc))
+            created.append(index_name)
+        else:
+            logger.warning(
+                "search_index_creation_failed", error=str(exc), exc_info=True
+            )
+    except Exception:
+        # mongot not available or search indexes not supported -- non-fatal
+        logger.info("search_index_creation_skipped", exc_info=True)
+
     return created

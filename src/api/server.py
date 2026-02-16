@@ -26,7 +26,7 @@ from src.api.routes.sessions import router as sessions_router
 from src.api.routes.stream import router as stream_router
 from src.config import get_settings
 from src.db.client import close_client, get_client
-from src.db.indexes import ensure_indexes, ensure_text_index
+from src.db.indexes import ensure_indexes, ensure_search_index, ensure_text_index
 from src.retrieval.atlas_search import init_search_backend
 from src.utils.logger import get_logger, setup_logging
 
@@ -49,14 +49,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.exception("mongodb_connection_failed_at_startup")
         raise
 
-    # Create indexes (idempotent) and detect search backend
+    # Create indexes (idempotent) -- separate try/except so each operation
+    # proceeds independently even if a prior one fails
     try:
         idx_names = ensure_indexes()
         logger.info("indexes_ensured", count=len(idx_names))
+    except Exception:
+        logger.warning("ensure_indexes_failed", exc_info=True)
+
+    try:
         text_idx = ensure_text_index()
         logger.info("text_index_ensured", count=len(text_idx))
     except Exception:
-        logger.warning("index_creation_warning", exc_info=True)
+        logger.warning("ensure_text_index_failed", exc_info=True)
+
+    try:
+        search_idx = ensure_search_index()
+        logger.info("search_index_ensured", count=len(search_idx))
+    except Exception:
+        logger.warning("ensure_search_index_failed", exc_info=True)
 
     init_search_backend()
 

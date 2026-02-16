@@ -7,6 +7,33 @@
 - Architecture: PageIndex Trees + MongoDB + Atlas Search (Lucene) + LLM Reasoning + FastAPI + Next.js 15
 
 ## Recent Changes
+- [Task-14] Slack feedback: 6 improvements from junderwood + Erik Hatcher
+- [Task-14] Item 1: .env.example model defaults fixed (gpt-4o-mini → haiku, claude-opus-4-6 → sonnet)
+- [Task-14] Item 2: phrase clauses in build_search_pipeline() -- PHRASE_BOOST=15.0 for title+summary
+- [Task-14] Item 3: _generate_shingles() + SHINGLE_BOOST=7.0 for bigram phrase clauses (3+ word queries)
+- [Task-14] Item 4: README "Why Vectorless?" -- replaced "hallucinates relevance" with "can't navigate" (junderwood feedback)
+- [Task-14] Item 5: README Quick Start -- fixed uvicorn command + added $search profile section
+- [Task-14] Item 6: README test counts updated to 463 backend tests
+- [Task-14] TDD: 8 new tests (phrase clauses, shingles, boost ordering). 471 backend + 300 frontend.
+- [Task-10] REM-FIX: 7 issues fixed from code-reviewer + silent-failure-hunter
+- [Task-10] CRITICAL #1: setup-generator.sh -- added `apk add --no-cache openssl` to docker-compose command
+- [Task-10] CRITICAL #2-3: init-mongod.sh -- mounted into mongodb-search container via /docker-entrypoint-initdb.d/ (localhost exception for user creation)
+- [Task-10] CRITICAL #2-3: Removed separate mongodb-search-init container (init runs inside mongodb-search)
+- [Task-10] HIGH #4: mongot depends_on fixed -- init is now inside mongodb-search, no separate init container needed
+- [Task-10] HIGH #5: server.py lifespan -- separate try/except for ensure_indexes, ensure_text_index, ensure_search_index
+- [Task-10] HIGH #6: init-mongod.sh -- added MAX_RETRIES=30 + counter + failure exit
+- [Task-10] HIGH #7: detect_search_backend() -- checks index status field, returns "text" for BUILDING state
+- [Task-10] TDD: 5 new tests (3 for BUILDING state, 2 for lifespan independence)
+- [Task-5] mongot BUILD COMPLETE: 4 phases, 15 tasks, all implemented
+- [Task-5] Phase 1: docker/search/ created (setup-generator.sh, mongod.conf, mongot.conf, init-mongod.sh)
+- [Task-5] Phase 1: docker-compose.yml updated with profiles: [search] services (setup-generator, mongodb-search, mongot, mongodb-search-init)
+- [Task-5] Phase 1: docker-compose.search.override.yml created (backend auth to mongodb-search)
+- [Task-5] Phase 2: ensure_search_index() in src/db/indexes.py (TDD: 5 tests RED/GREEN)
+- [Task-5] Phase 2: Wired into lifespan startup in src/api/server.py
+- [Task-5] Phase 3: init-mongod.sh creates both mongotUser (searchCoordinator) + backendUser (readWrite + clusterMonitor)
+- [Task-5] Phase 4: start-search.sh + verify-search.sh helper scripts, .gitignore updated
+- [Task-5] pymongo SearchIndexModel.document["name"] not .name -- attribute access via .document dict
+- [PLAN] mongot integration plan saved: docs/plans/2026-02-16-mongot-integration-plan.md (4 phases, 15 tasks)
 - [UX-BUILD] Full UX refactor: 3-phase plan → component-builder → review/hunt → 2x REM-FIX → integration-verifier
 - [Task-24] Session detail proxy: added data transform (sessionId→id, turns→messages, documentId→documentIds[])
 - [Task-24] Backend DELETE /sessions/{id} endpoint + delete_session() in session_manager.py
@@ -63,7 +90,8 @@
 - Backend 443 tests pass, Frontend 290 tests pass, TypeScript clean, build clean
 
 ## Next Steps
-- Commit all UX refactor changes
+1. Test mongot integration live: docker/search/start-search.sh + docker/search/verify-search.sh
+- Commit mongot integration changes
 - Make ingestion async (return 202 + poll status) for large PDF support
 - Add leaf vs parent summary distinction (prefix_summary for parents)
 - Add preference-integrated retrieval (domain rules, expert knowledge)
@@ -71,6 +99,7 @@
 - Fix benchmark silent failures in benchmark_runner.py
 
 ## Decisions
+- mongot integration: Docker Compose profiles (--profile search) for backward compatibility, init via /docker-entrypoint-initdb.d/ (not separate container), ensure_search_index() in Python lifespan
 - MongoDB Community fallback: detect_search_backend() at startup, transparent switch in atlas_search()
 - Atlas Search (Lucene) - built-in, free, full-text search
 - No Vector Search - vectorless philosophy
@@ -81,6 +110,19 @@
 - 5 MongoDB collections: documents, nodes, pages, retrieval_sessions, analytics
 
 ## Learnings
+- [Task-14] Atlas Search `phrase` operator boosts exact multi-word matches -- PHRASE_BOOST > TITLE_BOOST ensures phrase matches outrank individual word matches
+- [Task-14] Shingles (overlapping bigrams) improve partial phrase matching -- "revenue growth in Germany" generates ["revenue growth", "growth in", "in Germany", "Germany Q3"]
+- [Task-14] Only generate shingles for 3+ word queries -- 2-word queries are already a single phrase
+- [Task-14] README "hallucinates relevance" bullet was weak (BM25 also matches related terms) -- replaced with structural navigation advantage
+- [Task-8] All 12 mongot integration verification scenarios pass. 463 backend + 300 frontend stable. Shell scripts validated with shebangs + permissions.
+- [Task-8] docker compose config --quiet validates compose syntax (including profiles/overrides) without starting containers
+- [Task-8] macOS stat for permissions: use `stat -f "%Sp"` (not `stat -c` which is Linux-only)
+- [Task-10] mongodb/mongodb-community-server:8.0.4-ubi9 supports /docker-entrypoint-initdb.d/ -- Python entrypoint runs init scripts on localhost without auth
+- [Task-10] MONGODB_INITDB_ROOT_USERNAME + PASSWORD env vars trigger init sequence in community server image
+- [Task-10] Alpine 3.19 does NOT ship openssl binary -- must `apk add --no-cache openssl` before using openssl commands
+- [Task-10] detect_search_backend() must check index status field -- BUILDING state returns empty results from $search
+- [Task-10] Separate try/except for each index operation prevents cascading failures at startup
+- [Task-10] Init scripts in /docker-entrypoint-initdb.d/ only run on first startup (when DB not yet initialized)
 - [UX-BUILD] next/typescript ESLint config promotes no-explicit-any to ERROR — tsc passes but next build fails. Always run next build as final gate, not just tsc
 - [UX-BUILD] Detail proxy transforms easily missed when list proxy gets the transform — verify BOTH list and detail endpoints
 - [UX-BUILD] CORS allowed_methods must include DELETE if frontend uses it — default ["GET", "POST"] blocks DELETE silently
@@ -120,9 +162,11 @@
 - [E2E-FIX] Alpine wget healthcheck fails on localhost when server binds to 0.0.0.0 — use 0.0.0.0 in check
 
 ## References
+- Plan: `docs/plans/2026-02-16-mongot-integration-plan.md` (mongot + native $search on Community Edition)
 - Plan: docs/plans/VECTORLESS_RAG_SYSTEM_PLAN.md
 - UI Plan: docs/plans/NEXTJS_UI_PLAN.md
-- Research: docs/research/ (7 files)
+- Research: docs/research/ (8 files)
+- Research: docs/research/2026-02-16-mongot-community-search-research.md (mongot setup from JohnGUnderwood/mdb-community-search)
 - Source: reference/PageIndex/
 - cc100x Memory: .claude/cc100x/ (full history)
 
@@ -130,4 +174,4 @@
 - None
 
 ## Last Updated
-2026-02-15 - UX Refactor BUILD COMPLETE: 3 phases + 2 REM-FIX rounds. 300/300 frontend tests, tsc clean, next build 11 routes. Session CRUD fully functional. Sidebar + AppShell layout. Upload progress + success CTA.
+2026-02-16 - BUILD Slack Feedback COMPLETE. 7/7 E2E PASS. 471 backend + 300 frontend. Phrase/shingle search, README fixes, .env.example.

@@ -1,5 +1,6 @@
 services:
-  # MongoDB 7.0+ with replica set (required for Atlas Search indexes and transactions)
+  # === DEFAULT MODE (no profile) ===
+  # MongoDB 7.0+ with replica set (simple, no auth, no search)
   mongodb:
     image: mongo:7.0
     container_name: agentic-search-mongodb
@@ -22,6 +23,83 @@ services:
       timeout: 10s
       retries: 5
       start_period: 10s
+    networks:
+      - app-network
+
+  # === SEARCH PROFILE ===
+  # Phase 1: Generate keyfile + passwordFile for mongot auth
+  setup-generator:
+    image: alpine:3.19
+    profiles: [search]
+    container_name: agentic-search-setup
+    command: ["/bin/sh", "-c", "apk add --no-cache openssl && /bin/sh /scripts/setup-generator.sh"]
+    volumes:
+      - search_auth:/auth
+      - ./docker/search/setup-generator.sh:/scripts/setup-generator.sh:ro
+    networks:
+      - app-network
+
+  # Phase 2: MongoDB Community Server with mongot support
+  # Init script (init-mongod.sh) runs inside this container via /docker-entrypoint-initdb.d/
+  # on first startup. This uses the localhost exception for user creation.
+  mongodb-search:
+    image: mongodb/mongodb-community-server:8.0.4-ubi9
+    profiles: [search]
+    container_name: agentic-search-mongodb-search
+    command: ["--config", "/etc/mongod.conf"]
+    ports:
+      - "127.0.0.1:27018:27017"   # Port 27018 to avoid conflict with default mongodb
+    environment:
+      - MONGODB_INITDB_ROOT_USERNAME=admin
+      - MONGODB_INITDB_ROOT_PASSWORD=adminPass123
+    volumes:
+      - mongodb_search_data:/data/db
+      - search_auth:/auth:ro
+      - ./docker/search/mongod.conf:/etc/mongod.conf:ro
+      - ./docker/search/init-mongod.sh:/docker-entrypoint-initdb.d/init-mongod.sh:ro
+    healthcheck:
+      test: >
+        mongosh --eval "
+          try {
+            rs.status().ok
+          } catch(e) {
+            rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb-search:27017'}]});
+            1;
+          }
+        "
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 15s
+    depends_on:
+      setup-generator:
+        condition: service_completed_successfully
+    networks:
+      - app-network
+
+  # Phase 2: mongot (Lucene search engine)
+  # Depends on mongodb-search being healthy (users are created during mongodb-search startup)
+  mongot:
+    image: mongodb/mongodb-community-search:latest
+    profiles: [search]
+    container_name: agentic-search-mongot
+    command: ["--config", "/etc/mongot.conf"]
+    volumes:
+      - mongot_data:/data/mongot
+      - search_auth:/auth:ro
+      - ./docker/search/mongot.conf:/etc/mongot.conf:ro
+    ports:
+      - "127.0.0.1:8080:8080"    # Health check
+      - "127.0.0.1:9946:9946"    # Metrics
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      mongodb-search:
+        condition: service_healthy
     networks:
       - app-network
 
@@ -66,6 +144,9 @@ services:
 
 volumes:
   mongodb_data:
+  mongodb_search_data:
+  mongot_data:
+  search_auth:
 
 networks:
   app-network:

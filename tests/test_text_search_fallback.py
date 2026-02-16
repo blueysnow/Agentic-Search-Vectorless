@@ -137,6 +137,102 @@ class TestSearchBackendDetection:
             backend = detect_search_backend()
             assert backend == "text"
 
+    def test_detect_building_index_returns_text(self):
+        """detect_search_backend() returns 'text' when index exists but status is BUILDING."""
+        from src.retrieval.atlas_search import detect_search_backend
+
+        with patch("src.retrieval.atlas_search.nodes_col") as mock_col:
+            mock_col.return_value.list_search_indexes.return_value = [
+                {"name": "nodes_fulltext", "status": "BUILDING"}
+            ]
+            backend = detect_search_backend()
+            assert backend == "text"
+
+    def test_detect_ready_index_returns_atlas(self):
+        """detect_search_backend() returns 'atlas' when index status is READY."""
+        from src.retrieval.atlas_search import detect_search_backend
+
+        with patch("src.retrieval.atlas_search.nodes_col") as mock_col:
+            mock_col.return_value.list_search_indexes.return_value = [
+                {"name": "nodes_fulltext", "status": "READY"}
+            ]
+            backend = detect_search_backend()
+            assert backend == "atlas"
+
+    def test_detect_index_without_status_returns_atlas(self):
+        """detect_search_backend() returns 'atlas' when index has no status field (legacy)."""
+        from src.retrieval.atlas_search import detect_search_backend
+
+        with patch("src.retrieval.atlas_search.nodes_col") as mock_col:
+            mock_col.return_value.list_search_indexes.return_value = [
+                {"name": "nodes_fulltext"}
+            ]
+            backend = detect_search_backend()
+            assert backend == "atlas"
+
+
+class TestLifespanIndexIndependence:
+    """Test that index creation operations in server.py lifespan are independent (fix #5).
+
+    The server.py lifespan should use separate try/except for each index operation
+    so that failure of one does not prevent the others from running.
+    """
+
+    @pytest.mark.asyncio
+    async def test_text_and_search_indexes_called_when_ensure_indexes_fails(self):
+        """When ensure_indexes() raises, ensure_text_index() and ensure_search_index() still run."""
+        from src.api.server import lifespan, create_app
+
+        with (
+            patch("src.api.server.get_client") as mock_client,
+            patch("src.api.server.ensure_indexes") as mock_idx,
+            patch("src.api.server.ensure_text_index") as mock_text,
+            patch("src.api.server.ensure_search_index") as mock_search,
+            patch("src.api.server.init_search_backend"),
+            patch("src.api.server.close_client"),
+            patch("src.api.server.setup_logging"),
+        ):
+            mock_client.return_value.admin.command.return_value = {"ok": 1}
+            # ensure_indexes raises
+            mock_idx.side_effect = RuntimeError("DB crash on regular indexes")
+            mock_text.return_value = ["nodes_text_search"]
+            mock_search.return_value = ["nodes_fulltext"]
+
+            app = create_app()
+            async with lifespan(app):
+                pass
+
+            # The key assertion: text and search index functions MUST still be called
+            mock_text.assert_called_once()
+            mock_search.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_search_index_called_when_text_index_fails(self):
+        """When ensure_text_index() raises, ensure_search_index() still runs."""
+        from src.api.server import lifespan, create_app
+
+        with (
+            patch("src.api.server.get_client") as mock_client,
+            patch("src.api.server.ensure_indexes") as mock_idx,
+            patch("src.api.server.ensure_text_index") as mock_text,
+            patch("src.api.server.ensure_search_index") as mock_search,
+            patch("src.api.server.init_search_backend"),
+            patch("src.api.server.close_client"),
+            patch("src.api.server.setup_logging"),
+        ):
+            mock_client.return_value.admin.command.return_value = {"ok": 1}
+            mock_idx.return_value = ["index1"]
+            # text index raises
+            mock_text.side_effect = RuntimeError("text index failed")
+            mock_search.return_value = ["nodes_fulltext"]
+
+            app = create_app()
+            async with lifespan(app):
+                pass
+
+            # search index must still be called even though text index failed
+            mock_search.assert_called_once()
+
 
 class TestAtlasSearchFallback:
     """Test that atlas_search() falls back to text_search() when indexes missing."""

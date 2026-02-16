@@ -1,0 +1,12 @@
+# Override for search profile: backend connects to mongodb-search instead of mongodb
+# Usage: docker compose -f docker-compose.yml -f docker-compose.search.override.yml --profile search up
+
+services:
+  backend:
+    environment:
+      - MONGODB_URI=mongodb://backendUser:backendPass123@mongodb-search:27017/agentic_search?replicaSet=rs0&authSource=admin
+    depends_on:
+      mongodb-search:
+        condition: service_healthy
+      mongot:
+        condition: service_healthy
