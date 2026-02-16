@@ -43,6 +43,12 @@ reference/PageIndex/
 .claude/
 docs/plans/
 docs/research/
+docs/audits/
+AUDIT_*.txt
+PHASE*.txt
+PHASE*.md
+WEEK_*.yaml
+WEEK_*.md
 
 # Process IDs
 *.pid
