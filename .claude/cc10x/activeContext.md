@@ -87,7 +87,7 @@
 - [UX-BUILD] UI filter controls without backend support = dead UI — remove UI or add backend support, never leave connected but non-functional
 - [UX-BUILD] Proxy layer must forward ALL query params (limit, offset) or pagination silently breaks with defaults
 - [UX-BUILD] SessionListItemResponse uses populate_by_name with aliases — frontend proxy accesses camelCase alias names, frontend types use different field names, proxy must transform
-- [Task-9] MongoDB Community Edition lacks $search (Atlas Search) -- need $text fallback with text index
+- [Task-9] $text fallback needed when search indexes are not yet configured -- detect at startup
 - [Task-9] NEXT_PUBLIC_API_URL must be build ARG in Docker (Next.js bakes it in at build), browser connects to localhost:8000 not Docker network name
 - [Task-9] Next.js standalone output copies only needed files -- must also copy .next/static and public/ separately
 - [Task-9] detect_search_backend() at startup avoids per-query overhead -- set module-level flag once

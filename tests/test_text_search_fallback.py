@@ -1,12 +1,12 @@
-"""Tests for MongoDB Community Edition text search fallback.
+"""Tests for $text search fallback when search indexes are not configured.
 
 Covers:
 1. text_search() function returns RetrievalCandidate objects
 2. text_search() handles empty results gracefully
 3. text_search() handles DB errors gracefully
 4. ensure_text_index() creates the correct text index
-5. atlas_search() falls back to text_search() when $search fails
-6. detect_search_backend() detects Atlas vs Community
+5. atlas_search() falls back to text_search() when $search indexes missing
+6. detect_search_backend() detects Atlas vs $text
 """
 
 from unittest.mock import MagicMock, patch, AsyncMock
@@ -17,7 +17,7 @@ from src.models.retrieval import RetrievalCandidate
 
 
 class TestTextSearch:
-    """Test the $text fallback for MongoDB Community Edition."""
+    """Test the $text fallback for when search indexes are not configured."""
 
     @pytest.mark.asyncio
     async def test_text_search_returns_candidates(self):
@@ -80,7 +80,7 @@ class TestTextSearch:
 
 
 class TestEnsureTextIndex:
-    """Test text index creation for Community Edition."""
+    """Test text index creation as fallback."""
 
     def test_ensure_text_index_creates_index(self):
         """ensure_text_index() creates a text index on title, summary, keywords."""
@@ -116,7 +116,7 @@ class TestSearchBackendDetection:
     """Test Atlas Search availability detection."""
 
     def test_detect_atlas_search_available(self):
-        """detect_search_backend() returns 'atlas' when Atlas Search works."""
+        """detect_search_backend() returns 'atlas' when search indexes exist."""
         from src.retrieval.atlas_search import detect_search_backend
 
         with patch("src.retrieval.atlas_search.nodes_col") as mock_col:
@@ -126,8 +126,8 @@ class TestSearchBackendDetection:
             backend = detect_search_backend()
             assert backend == "atlas"
 
-    def test_detect_community_edition(self):
-        """detect_search_backend() returns 'community' when Atlas Search unavailable."""
+    def test_detect_no_search_indexes(self):
+        """detect_search_backend() returns 'text' when search indexes not found."""
         from src.retrieval.atlas_search import detect_search_backend
 
         with patch("src.retrieval.atlas_search.nodes_col") as mock_col:
@@ -135,20 +135,20 @@ class TestSearchBackendDetection:
                 "not supported"
             )
             backend = detect_search_backend()
-            assert backend == "community"
+            assert backend == "text"
 
 
 class TestAtlasSearchFallback:
-    """Test that atlas_search() falls back to text_search() on Community Edition."""
+    """Test that atlas_search() falls back to text_search() when indexes missing."""
 
     @pytest.mark.asyncio
-    async def test_atlas_search_uses_text_fallback_on_community(self):
-        """When _search_backend is 'community', atlas_search uses text_search."""
+    async def test_atlas_search_uses_text_fallback(self):
+        """When _search_backend is 'text', atlas_search uses text_search."""
         from src.retrieval import atlas_search as atlas_mod
 
-        # Force community mode
+        # Force text fallback mode
         original = atlas_mod._search_backend
-        atlas_mod._search_backend = "community"
+        atlas_mod._search_backend = "text"
         try:
             with patch.object(
                 atlas_mod, "text_search", new_callable=AsyncMock

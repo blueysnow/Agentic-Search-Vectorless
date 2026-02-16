@@ -1,7 +1,7 @@
 """Create all regular MongoDB indexes for the five collections.
 
-Matches plan section 2 exactly (13 indexes), plus a text index for
-MongoDB Community Edition fallback search.
+Matches plan section 2 exactly, plus a text index as fallback
+when search indexes are not yet configured.
 """
 
 from __future__ import annotations
@@ -128,11 +128,11 @@ def ensure_indexes() -> list[str]:
 
 
 def ensure_text_index() -> list[str]:
-    """Create a MongoDB text index on the nodes collection for Community Edition fallback.
+    """Create a MongoDB text index on the nodes collection as fallback.
 
-    This enables $text queries as an alternative to Atlas Search ($search) which
-    is only available on MongoDB Atlas. The text index covers title, summary, and
-    keywords fields.
+    This enables $text queries as an alternative to Atlas Search ($search) when
+    search indexes are not yet configured. The text index covers title, summary,
+    and keywords fields.
 
     Returns a list of created index names. Idempotent -- silently handles
     'index already exists' errors.

@@ -57,7 +57,7 @@ When a user asks a question, the system runs two retrieval paths **in parallel**
 
 A standard full-text search using MongoDB Atlas Search. Lucene-powered BM25 scoring across titles, summaries, and keywords with configurable boost weights (title: 10x, summary: 5x, keywords: 3x). Returns results in milliseconds.
 
-Falls back to MongoDB `$text` indexes on Community Edition -- same field weights, just a different engine under the hood.
+Falls back to MongoDB `$text` indexes when search indexes aren't configured -- same field weights, just a different engine under the hood.
 
 **Path 2: Tree Navigation (slower, reasoning-driven)**
 
@@ -172,7 +172,7 @@ With MongoDB Atlas Search, the Lucene index sits **on the same data**. No sync. 
 
 The same query that searches also filters by document, scores by field importance, and projects only the fields the LLM needs. One pipeline, one network call. Try doing that across Postgres + Elasticsearch.
 
-And when Atlas Search isn't available (Community Edition, local dev), the system auto-detects at startup and falls back to `$text` indexes with the same field weights. Same application code, different engine under the hood. No code path divergence.
+And when search indexes aren't configured yet, the system auto-detects at startup and falls back to `$text` indexes with the same field weights. Same application code, different engine under the hood. No code path divergence.
 
 ### 3. Every retrieval query is a single indexed operation
 

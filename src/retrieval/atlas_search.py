@@ -3,8 +3,8 @@
 Builds compound queries with boosted title/summary, keyword filtering, fuzzy matching,
 and document scoping. Returns scored RetrievalCandidate objects.
 
-Includes a $text fallback for MongoDB Community Edition (which lacks Atlas Search).
-At startup, detect_search_backend() determines whether Atlas Search is available.
+Includes a $text fallback for when search indexes are not yet configured.
+At startup, detect_search_backend() determines whether Atlas Search indexes exist.
 If not, atlas_search() transparently delegates to text_search() using standard $text indexes.
 """
 
@@ -23,7 +23,7 @@ TITLE_BOOST = 10.0
 SUMMARY_BOOST = 5.0
 KEYWORD_BOOST = 3.0
 
-# Search backend: "atlas" (Atlas Search $search) or "community" ($text fallback).
+# Search backend: "atlas" (Atlas Search $search) or "text" ($text fallback).
 # Set at startup by detect_search_backend() or manually for testing.
 _search_backend: str = "atlas"
 
@@ -132,24 +132,24 @@ def build_search_pipeline(
 
 
 def detect_search_backend() -> str:
-    """Detect whether Atlas Search or Community Edition text search should be used.
+    """Detect whether Atlas Search indexes are configured.
 
     Tries to list search indexes on the nodes collection. If that succeeds and
-    'nodes_fulltext' exists, Atlas Search is available. Otherwise falls back to
-    standard MongoDB $text search (Community Edition).
+    'nodes_fulltext' exists, Atlas Search is used. Otherwise falls back to
+    standard MongoDB $text search.
 
     Returns:
-        "atlas" or "community"
+        "atlas" or "text"
     """
     try:
         existing = {idx["name"] for idx in nodes_col().list_search_indexes()}
         if "nodes_fulltext" in existing:
             return "atlas"
-        logger.info("atlas_search_index_not_found", backend="community")
-        return "community"
+        logger.info("atlas_search_index_not_found", backend="text")
+        return "text"
     except Exception:
-        logger.info("atlas_search_not_available", backend="community", exc_info=True)
-        return "community"
+        logger.info("atlas_search_not_available", backend="text", exc_info=True)
+        return "text"
 
 
 def init_search_backend() -> None:
@@ -166,7 +166,7 @@ async def text_search(
     limit: int = 5,
     content_type_filter: str | None = None,
 ) -> list[RetrievalCandidate]:
-    """Execute a standard MongoDB $text search as fallback for Community Edition.
+    """Execute a standard MongoDB $text search as fallback when search indexes are not configured.
 
     Uses the text index on {title, summary, keywords} created by ensure_text_index().
     Returns RetrievalCandidate objects with the same interface as atlas_search().
@@ -232,13 +232,13 @@ async def atlas_search(
     """Execute search and return scored candidates.
 
     Uses Atlas Search ($search) when available, falls back to $text search
-    on MongoDB Community Edition. Returns empty list on failure (non-fatal
-    for dual retrieval).
+    when search indexes are not configured. Returns empty list on failure
+    (non-fatal for dual retrieval).
     """
-    # Community Edition fallback: use $text search
-    if _search_backend == "community":
+    # $text fallback: use when search indexes are not configured
+    if _search_backend == "text":
         if use_fuzzy:
-            logger.debug("fuzzy_not_supported_community", query=query)
+            logger.debug("fuzzy_not_supported_text_backend", query=query)
         return await text_search(
             query,
             document_id,
