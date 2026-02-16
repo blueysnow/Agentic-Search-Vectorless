@@ -39,6 +39,11 @@ logs/
 *.log
 reference/PageIndex/
 
+# Internal workflow files
+.claude/
+docs/plans/
+docs/research/
+
 # Process IDs
 *.pid
 
