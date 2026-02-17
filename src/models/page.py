@@ -21,6 +21,7 @@ class Page(BaseModel):
 
     has_table: bool = Field(False, alias="hasTable")
     has_figure: bool = Field(False, alias="hasFigure")
+    has_math: bool = Field(False, alias="hasMath")
     language: str = "en"
 
     created_at: datetime = Field(
