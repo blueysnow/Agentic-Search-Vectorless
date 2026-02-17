@@ -1,4 +1,4 @@
-"""GET /documents -- list and retrieve documents (Phase 4)."""
+"""Document routes -- list, retrieve, delete documents (Phase 4)."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from src.api.models import (
     DocumentResponse,
     IngestionStatusResponse,
 )
-from src.db.collections import documents_col
+from src.db.collections import documents_col, nodes_col, pages_col
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -93,3 +93,20 @@ def get_document(
     if doc is None:
         raise HTTPException(status_code=404, detail="Document not found")
     return _doc_to_response(doc)
+
+
+@router.delete("/{document_id}", status_code=204)
+def delete_document(
+    document_id: str = Path(
+        ..., min_length=1, max_length=100, pattern=_DOCUMENT_ID_PATTERN
+    ),
+) -> None:
+    """Delete a document and its associated nodes and pages."""
+    doc = documents_col().find_one({"documentId": document_id}, {"_id": 0})
+    if doc is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    nodes_col().delete_many({"documentId": document_id})
+    pages_col().delete_many({"documentId": document_id})
+    documents_col().delete_one({"documentId": document_id})
+    logger.info("document_deleted", document_id=document_id)

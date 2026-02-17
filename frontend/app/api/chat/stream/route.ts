@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         }
 
         // Call FastAPI backend chat endpoint
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002'
+        const apiUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002'
         const res = await fetch(`${apiUrl}/query/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

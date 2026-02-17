@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
     if (limit) params.append('limit', limit)
     if (offset) params.append('offset', offset)
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002'
+    const apiUrl = process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002'
     const url = params.toString()
-      ? `${apiUrl}/sessions?${params.toString()}`
-      : `${apiUrl}/sessions`
+      ? `${apiUrl}/sessions/?${params.toString()}`
+      : `${apiUrl}/sessions/`
 
     // H1: Add 10-second timeout for session list fetch
     const abortController = new AbortController()
