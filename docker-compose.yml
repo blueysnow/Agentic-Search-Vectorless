@@ -27,7 +27,7 @@ services:
       - app-network
 
   # === SEARCH PROFILE ===
-  # Phase 1: Generate keyfile + passwordFile for mongot auth
+  # Generate passwordFile required by mongot (even though mongod skips auth)
   setup-generator:
     image: alpine:3.19
     profiles: [search]
@@ -39,51 +39,50 @@ services:
     networks:
       - app-network
 
-  # Phase 2: MongoDB Community Server with mongot support
-  # Init script (init-mongod.sh) runs inside this container via /docker-entrypoint-initdb.d/
-  # on first startup. This uses the localhost exception for user creation.
+  # MongoDB Community Server with mongot support
+  # Custom entrypoint: Phase 1 creates users (no setParameter), Phase 2 starts
+  # mongod with full config (setParameter for mongot). This avoids the default
+  # entrypoint which merges setParameter into the temp mongod, causing it to
+  # hang waiting for mongot that isn't started yet.
   mongodb-search:
     image: mongodb/mongodb-community-server:8.0.4-ubi9
     profiles: [search]
     container_name: agentic-search-mongodb-search
-    command: ["--config", "/etc/mongod.conf"]
+    entrypoint: ["/bin/bash", "/scripts/start-mongod.sh"]
     ports:
-      - "127.0.0.1:27018:27017"   # Port 27018 to avoid conflict with default mongodb
-    environment:
-      - MONGODB_INITDB_ROOT_USERNAME=admin
-      - MONGODB_INITDB_ROOT_PASSWORD=adminPass123
+      - "127.0.0.1:27018:27017"
     volumes:
       - mongodb_search_data:/data/db
-      - search_auth:/auth:ro
+      - search_auth:/auth
       - ./docker/search/mongod.conf:/etc/mongod.conf:ro
-      - ./docker/search/init-mongod.sh:/docker-entrypoint-initdb.d/init-mongod.sh:ro
+      - ./docker/search/mongod-init.conf:/etc/mongod-init.conf:ro
+      - ./docker/search/start-mongod.sh:/scripts/start-mongod.sh:ro
     healthcheck:
       test: >
-        mongosh --eval "
-          try {
-            rs.status().ok
-          } catch(e) {
-            rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongodb-search:27017'}]});
-            1;
-          }
+        mongosh --host 127.0.0.1 -u admin -p adminPass123 --authenticationDatabase admin --quiet --eval "
+          rs.status().ok
         "
       interval: 10s
       timeout: 10s
-      retries: 10
-      start_period: 15s
+      retries: 15
+      start_period: 30s
     depends_on:
       setup-generator:
         condition: service_completed_successfully
     networks:
       - app-network
 
-  # Phase 2: mongot (Lucene search engine)
-  # Depends on mongodb-search being healthy (users are created during mongodb-search startup)
+  # mongot (Lucene search engine for $search support)
   mongot:
     image: mongodb/mongodb-community-search:latest
     profiles: [search]
     container_name: agentic-search-mongot
-    command: ["--config", "/etc/mongot.conf"]
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        cp /auth/passwordFile /tmp/passwordFile
+        chmod 400 /tmp/passwordFile
+        exec /mongot-community/mongot --config /etc/mongot.conf
     volumes:
       - mongot_data:/data/mongot
       - search_auth:/auth:ro
@@ -103,21 +102,21 @@ services:
     networks:
       - app-network
 
-  # FastAPI backend (port 8000)
+  # FastAPI backend (port 8002)
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: agentic-search-backend
     ports:
-      - "8000:8000"
+      - "8002:8002"
     env_file:
       - path: .env
         required: false
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/?replicaSet=rs0
       - MONGODB_DATABASE=agentic_search
-      - PORT=8000
+      - PORT=8002
       - CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
     depends_on:
       mongodb:
@@ -131,7 +130,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: http://localhost:8000
+        NEXT_PUBLIC_API_URL: http://localhost:8002
     container_name: agentic-search-frontend
     ports:
       - "3000:3000"

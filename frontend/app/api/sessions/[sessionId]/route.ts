@@ -16,7 +16,7 @@ export async function GET(
       )
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002'
 
     // M-REM3-2: Add 10-second timeout for GET request
     const abortController = new AbortController()
@@ -83,7 +83,7 @@ export async function DELETE(
       )
     }
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8002'
 
     // M-REM3-3: Add 10-second timeout for DELETE request
     const abortController = new AbortController()

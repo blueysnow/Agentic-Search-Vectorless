@@ -54,7 +54,7 @@ npm install
 Create `.env.local`:
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://localhost:8002
 ```
 
 ### Development
@@ -105,7 +105,7 @@ This project implements performance best practices from Vercel:
 
 ## Backend Integration
 
-The UI connects to the FastAPI backend at `http://localhost:8000`:
+The UI connects to the FastAPI backend at `http://localhost:8002`:
 
 - `POST /api/documents` - Upload documents
 - `GET /api/documents` - List documents

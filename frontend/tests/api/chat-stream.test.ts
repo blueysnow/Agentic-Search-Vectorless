@@ -7,7 +7,7 @@ describe('GET /api/chat/stream', () => {
 
   beforeEach(() => {
     global.fetch = mockFetch
-    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000'
+    process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8002'
   })
 
   afterEach(() => {
@@ -66,7 +66,7 @@ describe('GET /api/chat/stream', () => {
     await GET(request)
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'http://localhost:8000/query/stream',
+      'http://localhost:8002/query/stream',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({

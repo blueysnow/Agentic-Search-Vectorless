@@ -293,21 +293,51 @@ cp .env.example .env
 docker compose up
 ```
 
-Three containers: MongoDB 7.0 (with replica set), FastAPI backend on `:8000`, Next.js frontend on `:3000`.
+Three containers: MongoDB 7.0 (with replica set), FastAPI backend on `:8002`, Next.js frontend on `:3000`.
+
+**With `$search` support (Atlas Search on Community Edition):**
+
+```bash
+# Start with the search profile (adds mongot for native $search)
+docker compose --profile search up
+```
+
+This adds MongoDB Community 8.0+ with the `mongot` binary, enabling native `$search` aggregation pipelines. Five containers total:
+
+| Container | Image | Port | Description |
+|-----------|-------|------|-------------|
+| mongodb | mongo:7.0 | 27017 | Default MongoDB (replica set, no auth) |
+| mongodb-search | mongodb-community-server:8.0.4 | 27018 | MongoDB with mongot integration + auth |
+| mongot | mongodb-community-search | 8080, 9946 | Lucene search engine (gRPC on 27028) |
+| backend | FastAPI | 8002 | Python API server |
+| frontend | Next.js 15 | 3000 | React UI |
+
+Without the search profile, the system automatically falls back to `$text` indexes.
+
+To connect the backend to the search-enabled MongoDB instead of the default one:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.search.override.yml --profile search up
+```
 
 ### Local Development
 
-**Backend:**
+**Backend (using uv):**
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+uv venv .venv --python 3.12
+source .venv/bin/activate
+uv pip install -e ".[dev]"
 
-# Start MongoDB (needs replica set for Atlas Search)
+# Start MongoDB (needs replica set)
+# Option 1: Use Docker
+docker compose up mongodb
+
+# Option 2: Local mongod
 mongod --replSet rs0
 
 # Run backend
-uvicorn src.api.server:create_app --factory --reload --port 8000
+uvicorn src.api.server:create_app --factory --reload --port 8002
 ```
 
 **Frontend:**
@@ -317,18 +347,6 @@ cd frontend
 npm install
 npm run dev
 ```
-
-**With `$search` support (Atlas Search on Community Edition):**
-
-```bash
-# Start with the search profile (adds mongot for native $search)
-docker compose --profile search up
-
-# Or with the override file for full control:
-docker compose -f docker-compose.yml -f docker-compose.search.override.yml --profile search up
-```
-
-This starts MongoDB Community 8.2+ with the `mongot` binary, enabling native `$search` aggregation pipelines. Without the search profile, the system automatically falls back to `$text` indexes.
 
 ### Environment Variables
 
@@ -343,12 +361,13 @@ ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 
 # Optional
-LLM_INGESTION_MODEL=claude-3-5-haiku-20241022
-LLM_RETRIEVAL_MODEL=claude-sonnet-4-20250514
+LLM_INGESTION_MODEL=claude-haiku-4-5-20251001
+LLM_RETRIEVAL_MODEL=claude-haiku-4-5-20251001
 ATLAS_SEARCH_WEIGHT=0.3
 TREE_NAVIGATION_WEIGHT=0.7
 MAX_RETRIEVAL_ITERATIONS=5
 TOP_N_CANDIDATES=5
+PORT=8002
 ```
 
 ## API
@@ -372,13 +391,13 @@ GET  /health               Health check (includes MongoDB status)
 
 ```bash
 # Upload a document
-curl -X POST http://localhost:8000/ingest/upload \
+curl -X POST http://localhost:8002/ingest/upload \
   -F "file=@annual-report.pdf" \
   -F "name=Annual Report 2024" \
   -F "domain=finance"
 
 # Ask a question
-curl -X POST http://localhost:8000/query/ \
+curl -X POST http://localhost:8002/query/ \
   -H "Content-Type: application/json" \
   -d '{"query": "What was the revenue in Germany?", "documentId": "..."}'
 
