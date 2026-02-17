@@ -12,7 +12,7 @@ This milestone adds math formula extraction and LaTeX rendering to an existing v
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Validation and Foundation** - Empirically verify PDF math extraction quality and build the math detection module
+- [x] **Phase 1: Validation and Foundation** - Empirically verify PDF math extraction quality and build the math detection module (completed 2026-02-17)
 - [ ] **Phase 2: Ingestion Pipeline** - Wire math extraction end-to-end through PDF parsing, tree building, and node enrichment
 - [ ] **Phase 3: Retrieval and API Layer** - Ensure LaTeX survives JSON serialization, LLM prompts, and Atlas Search indexing
 - [ ] **Phase 4: Frontend Rendering** - Render LaTeX formulas with KaTeX in chat and document views
@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The system's behavior when LaTeX backslashes appear in LLM JSON responses is predictable — `json_utils.py` handles them without silent corruption
   3. A `math_extractor.py` module exists with regex-based detection of `$...$`, `$$...$$`, and `\begin{equation}` patterns, covered by unit tests
   4. The ingestion pipeline can accept a PDF and produce page content with a `has_math` flag, even if the flag is always False on non-math documents
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] 01-01-PLAN.md — Add pymupdf4llm dependency and create PDF math extraction validation script (VAL-01, VAL-02)
@@ -87,7 +87,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Validation and Foundation | 0/2 | Planned | - |
+| 1. Validation and Foundation | 0/2 | Complete    | 2026-02-17 |
 | 2. Ingestion Pipeline | 0/3 | Not started | - |
 | 3. Retrieval and API Layer | 0/3 | Not started | - |
 | 4. Frontend Rendering | 0/2 | Not started | - |
