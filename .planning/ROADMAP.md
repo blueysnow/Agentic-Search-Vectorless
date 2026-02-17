@@ -28,11 +28,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. The system's behavior when LaTeX backslashes appear in LLM JSON responses is predictable — `json_utils.py` handles them without silent corruption
   3. A `math_extractor.py` module exists with regex-based detection of `$...$`, `$$...$$`, and `\begin{equation}` patterns, covered by unit tests
   4. The ingestion pipeline can accept a PDF and produce page content with a `has_math` flag, even if the flag is always False on non-math documents
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 01-01: Empirical PDF validation — run PyMuPDF and pymupdf4llm on real 수능 samples, document symbol extraction quality
-- [ ] 01-02: Fix `json_utils.py` for LaTeX backslash escaping and create `math_extractor.py` with tests
+- [ ] 01-01-PLAN.md — Add pymupdf4llm dependency and create PDF math extraction validation script (VAL-01, VAL-02)
+- [ ] 01-02-PLAN.md — Fix json_utils.py LaTeX backslash escaping, create math_extractor.py, add has_math to Page model
 
 ### Phase 2: Ingestion Pipeline
 **Goal**: Uploading a math-containing PDF results in pages and nodes that store LaTeX-formatted formulas, ready for retrieval
@@ -83,11 +83,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Validation and Foundation | 0/2 | Not started | - |
+| 1. Validation and Foundation | 0/2 | Planned | - |
 | 2. Ingestion Pipeline | 0/3 | Not started | - |
 | 3. Retrieval and API Layer | 0/3 | Not started | - |
 | 4. Frontend Rendering | 0/2 | Not started | - |
