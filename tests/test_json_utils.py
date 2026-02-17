@@ -60,3 +60,56 @@ def test_get_json_content_no_fences():
     text = '{"key": "val"}'
     result = get_json_content(text)
     assert result == '{"key": "val"}'
+
+
+# --- LaTeX backslash tests ---
+
+
+def test_extract_json_latex_frac():
+    """LLM returns LaTeX \\frac in a JSON string value."""
+    text = '{"title": "부등식 \\frac{a}{b} \\geq 0"}'
+    result = extract_json(text)
+    assert result is not None
+    assert "frac" in result["title"]
+
+
+def test_extract_json_latex_sqrt():
+    """LLM returns LaTeX \\sqrt in a JSON string value."""
+    text = '{"formula": "\\sqrt{x^2 + y^2}"}'
+    result = extract_json(text)
+    assert result is not None
+    assert "sqrt" in result["formula"]
+
+
+def test_extract_json_latex_with_fences():
+    """LLM returns fenced JSON containing LaTeX."""
+    text = '```json\n{"summary": "이차방정식 \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}"}\n```'
+    result = extract_json(text)
+    assert result is not None
+    assert "frac" in result["summary"]
+
+
+def test_extract_json_latex_does_not_corrupt_valid_escapes():
+    """Existing valid JSON escapes (\\n, \\t, \\") must NOT be double-escaped."""
+    text = '{"text": "line1\\nline2\\ttab", "path": "c:\\\\dir"}'
+    result = extract_json(text)
+    assert result is not None
+    assert result["text"] == "line1\nline2\ttab"
+    assert result["path"] == "c:\\dir"
+
+
+def test_extract_json_latex_with_python_none():
+    """Both LaTeX backslashes and Python None in same response."""
+    text = '{"value": None, "formula": "\\int_0^1 f(x) dx"}'
+    result = extract_json(text)
+    assert result is not None
+    assert result["value"] is None
+    assert "int" in result["formula"]
+
+
+def test_extract_json_latex_multiple_commands():
+    """Multiple LaTeX commands in one JSON response."""
+    text = '{"q": "\\alpha + \\beta = \\gamma \\implies \\delta"}'
+    result = extract_json(text)
+    assert result is not None
+    assert "alpha" in result["q"]
