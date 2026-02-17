@@ -17,6 +17,7 @@ dependencies = [
     "tiktoken>=0.8",
     "pypdf>=4.0",
     "PyMuPDF>=1.24",
+    "pymupdf4llm>=0.0.17",
     "structlog>=24.4",
     "python-dotenv>=1.0",
     "fastapi>=0.115",
