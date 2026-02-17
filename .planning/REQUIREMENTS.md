@@ -63,18 +63,18 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VAL-01 | Phase 1 | Pending |
-| VAL-02 | Phase 1 | Pending |
-| ING-01 | Phase 2 | Pending |
-| ING-02 | Phase 2 | Pending |
-| ING-03 | Phase 2 | Pending |
-| ING-04 | Phase 2 | Pending |
-| RET-01 | Phase 3 | Pending |
-| RET-02 | Phase 3 | Pending |
-| RET-03 | Phase 3 | Pending |
-| FE-01 | Phase 4 | Pending |
-| FE-02 | Phase 4 | Pending |
-| FE-03 | Phase 4 | Pending |
+| VAL-01 | Phase 1 — Validation and Foundation | Pending |
+| VAL-02 | Phase 1 — Validation and Foundation | Pending |
+| ING-01 | Phase 2 — Ingestion Pipeline | Pending |
+| ING-02 | Phase 2 — Ingestion Pipeline | Pending |
+| ING-03 | Phase 2 — Ingestion Pipeline | Pending |
+| ING-04 | Phase 2 — Ingestion Pipeline | Pending |
+| RET-01 | Phase 3 — Retrieval and API Layer | Pending |
+| RET-02 | Phase 3 — Retrieval and API Layer | Pending |
+| RET-03 | Phase 3 — Retrieval and API Layer | Pending |
+| FE-01 | Phase 4 — Frontend Rendering | Pending |
+| FE-02 | Phase 4 — Frontend Rendering | Pending |
+| FE-03 | Phase 4 — Frontend Rendering | Pending |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -83,4 +83,4 @@ Deferred to future release. Tracked but not in current roadmap.
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after initial definition*
+*Last updated: 2026-02-17 after roadmap creation — traceability finalized*
