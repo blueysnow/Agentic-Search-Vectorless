@@ -1,6 +1,7 @@
 'use client'
 
 import { memo } from 'react'
+import ReactMarkdown from 'react-markdown'
 import type { ChatMessage } from '@/lib/hooks/use-chat-stream'
 import { ThinkingProcess } from './ThinkingProcess'
 import { PageCitation } from './PageCitation'
@@ -38,7 +39,15 @@ export const MessageItem = memo(function MessageItem({ message }: MessageItemPro
 
         {/* Main content */}
         <div className="prose prose-sm max-w-none">
-          {message.content || (!isUser && <span className="text-gray-400">Thinking...</span>)}
+          {message.content ? (
+            isUser ? (
+              message.content
+            ) : (
+              <ReactMarkdown>{message.content}</ReactMarkdown>
+            )
+          ) : (
+            !isUser && <span className="text-gray-400">Thinking...</span>
+          )}
         </div>
 
         {/* Citations */}

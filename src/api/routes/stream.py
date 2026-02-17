@@ -21,7 +21,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from src.config import get_settings
-from src.db.collections import documents_col
+from src.db.collections import documents_col, nodes_col
 from src.llm.provider import get_provider
 from src.retrieval.pipeline import retrieve
 from src.utils.logger import get_logger
@@ -175,12 +175,38 @@ async def _stream_response(request: StreamRequest) -> AsyncGenerator[str, None]:
 
         # Step 6: Emit citations from nodes_read (page references)
         nodes_read = result.trace.get("nodes_read", [])
+        if nodes_read:
+            # Batch-fetch startPage for all nodes to avoid N+1 queries
+            node_docs = list(
+                nodes_col().find(
+                    {"documentId": document_id, "nodeId": {"$in": nodes_read}},
+                    {"nodeId": 1, "startPage": 1, "title": 1, "_id": 0},
+                )
+            )
+            node_page_map = {
+                n["nodeId"]: n.get("startPage", 1) for n in node_docs
+            }
+            node_title_map = {
+                n["nodeId"]: n.get("title", "") for n in node_docs
+            }
+        else:
+            node_page_map = {}
+            node_title_map = {}
+
+        seen_nodes: set[str] = set()
         for node_id in nodes_read:
+            # De-duplicate: emit one citation per unique node
+            if node_id in seen_nodes:
+                continue
+            seen_nodes.add(node_id)
+
+            page = node_page_map.get(node_id, 1)
+            title = node_title_map.get(node_id, node_id)
             yield _sse_event(
                 "citation",
                 {
-                    "page": 0,  # Page info would come from node metadata
-                    "text": f"Referenced section: {node_id}",
+                    "page": page,
+                    "text": f"Referenced section: {title or node_id}",
                 },
             )
 
