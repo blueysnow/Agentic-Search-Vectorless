@@ -109,7 +109,9 @@ class APIClient {
 
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100)
+          // Cap at 99% - the final 100% is reached only when the server responds.
+          // This distinguishes "data transfer complete" from "server processing complete".
+          const percent = Math.min(99, Math.round((e.loaded / e.total) * 100))
           onProgress(percent)
         }
       })

@@ -152,7 +152,11 @@ export function UploadForm() {
       {uploadMutation.isPending && uploadMutation.uploadProgress !== null && (
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-gray-600">
-            <span>Uploading...</span>
+            {uploadMutation.uploadProgress >= 99 ? (
+              <span>Processing document...</span>
+            ) : (
+              <span>Uploading...</span>
+            )}
             <span>{uploadMutation.uploadProgress}%</span>
           </div>
           <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -161,14 +165,19 @@ export function UploadForm() {
               style={{ width: `${uploadMutation.uploadProgress}%` }}
             />
           </div>
+          {uploadMutation.uploadProgress >= 99 && (
+            <p className="text-xs text-gray-500">
+              File received. Building document index with AI (this may take a minute)...
+            </p>
+          )}
         </div>
       )}
 
       {/* Success banner with chat link */}
       {lastUploadedDoc && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-md text-sm text-green-800">
-          <p className="font-medium">Document uploaded successfully!</p>
-          <p className="mt-1">Processing will begin shortly.</p>
+          <p className="font-medium">Document uploaded and indexed successfully!</p>
+          <p className="mt-1">Your document is ready to query.</p>
           <Link
             href={`/query?documentId=${lastUploadedDoc.documentId}`}
             className="inline-flex items-center mt-2 text-sm font-medium text-green-700 hover:text-green-900 cursor-pointer"
@@ -183,7 +192,11 @@ export function UploadForm() {
         disabled={uploadMutation.isPending || !selectedFile}
         className="w-full py-2 px-4 bg-primary text-primary-foreground rounded-md font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 cursor-pointer"
       >
-        {uploadMutation.isPending ? 'Uploading...' : 'Upload Document'}
+        {uploadMutation.isPending
+          ? uploadMutation.uploadProgress !== null && uploadMutation.uploadProgress >= 99
+            ? 'Processing...'
+            : 'Uploading...'
+          : 'Upload Document'}
       </button>
     </form>
   )
