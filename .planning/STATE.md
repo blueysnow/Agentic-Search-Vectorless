@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** 수학 수식이 포함된 PDF 문서를 업로드하면 수식이 LaTeX 형식으로 정확하게 파싱되어, 검색 결과와 답변에서 수식이 올바르게 렌더링되어야 한다.
-**Current focus:** Phase 1 — Validation and Foundation
+**Current focus:** Phase 1 — Validation and Foundation (complete — ready for Phase 2)
 
 ## Current Position
 
@@ -43,7 +43,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - [Pre-Phase 1]: KaTeX chosen over MathJax — synchronous rendering required for SSE streaming; MathJax async conflicts with Next.js 15 App Router hydration (pending PROJECT.md update)
-- [Pre-Phase 1]: PDF math extraction strategy TBD pending empirical validation in Phase 1 — determines whether regex detection is sufficient or LLM reconstruction is mandatory
+- [Pre-Phase 1 RESOLVED 2026-02-18]: **LLM reconstruction is MANDATORY for Phase 2** — Korean 수능 PDFs use HWP custom fonts with private-use-area codepoints (U+E000-U+F8FF); all 20 pages DEGRADED under raw PyMuPDF; pymupdf4llm drops garbled content but does NOT recover math. Regex detection is NOT viable. Empirically confirmed on `수학영역_문제지_홀수형.pdf` (20 pages).
 - [01-01]: pymupdf4llm added as project dependency — enables LLM-ready markdown extraction for dual-backend comparison
 - [01-01]: Diagnostic script in scripts/ (not tests/) — it's a developer tool, not an automated test
 - [01-01]: 8-category Unicode classifier: math_operator, private_use, replacement, hangul, ascii, superscript_subscript, arrow, other
@@ -53,14 +53,15 @@ Recent decisions affecting current work:
 
 ### Pending Todos
 
-- Run `uv run python scripts/validate_pdf_math.py <suneung_pdf>` on 1-3 real 수능 math PDFs and document findings (resolves CRITICAL architectural unknown for Phase 2 ingestion strategy)
+None — Phase 1 is complete. Phase 2 planning may begin.
 
 ### Blockers/Concerns
 
-- [Phase 1 CHECKPOINT]: Awaiting human to run `scripts/validate_pdf_math.py` on real 수능 PDFs. Result determines whether Phase 2 uses regex detection vs. mandatory LLM reconstruction for math. No action possible until findings are documented.
+- [Phase 2 design]: LLM reconstruction mandatory — Phase 2 ingestion must NOT attempt regex-based math detection on raw PDF text. Must use LLM-based formula reconstruction from page images or equivalent. See validate_report.json for empirical evidence.
+- [Phase 2 prerequisite RESOLVED]: json_utils.py LaTeX backslash escaping fixed in 01-02 (commit 857beb8) — prerequisite for all math-aware LLM calls is now met.
 
 ## Session Continuity
 
-Last session: 2026-02-17
-Stopped at: Completed 01-02-PLAN.md — LaTeX JSON fix and math_extractor module
-Resume file: .planning/phases/01-validation-and-foundation/01-02-SUMMARY.md
+Last session: 2026-02-18
+Stopped at: Completed 01-01-PLAN.md — Task 2 human verification resolved; LLM reconstruction mandatory decision documented
+Resume file: .planning/phases/01-validation-and-foundation/01-01-SUMMARY.md
