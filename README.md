@@ -348,6 +348,8 @@ npm install
 npm run dev
 ```
 
+> **Note:** 어떤 방식이든 프론트엔드는 **포트 3000**에서 실행되며, 백엔드 API는 **포트 8002**에서 실행됩니다.
+
 ### Environment Variables
 
 ```bash
