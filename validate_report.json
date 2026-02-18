@@ -1,0 +1,934 @@
+{
+  "meta": {
+    "script_version": "1.0.0",
+    "timestamp": "2026-02-17T15:24:11.560373+00:00",
+    "filename": "수학영역_문제지_홀수형.pdf",
+    "filepath": "/home/moamath/work/Agentic-Search-Vectorless/tests/fixtures/수학영역_문제지_홀수형.pdf",
+    "total_pages_in_pdf": 20,
+    "pages_analyzed": 20
+  },
+  "pymupdf": [
+    {
+      "total_chars": 327,
+      "by_category": {
+        "math_operator": 1,
+        "private_use": 107,
+        "replacement": 0,
+        "hangul": 115,
+        "ascii": 82,
+        "superscript_subscript": 0,
+        "arrow": 1,
+        "other": 21
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-µð³ª·ç",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 1
+    },
+    {
+      "total_chars": 239,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 93,
+        "replacement": 0,
+        "hangul": 67,
+        "ascii": 63,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 16
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HaansoftBatang",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 2
+    },
+    {
+      "total_chars": 302,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 112,
+        "replacement": 0,
+        "hangul": 94,
+        "ascii": 80,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 16
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 3
+    },
+    {
+      "total_chars": 283,
+      "by_category": {
+        "math_operator": 1,
+        "private_use": 85,
+        "replacement": 0,
+        "hangul": 112,
+        "ascii": 75,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 10
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 4
+    },
+    {
+      "total_chars": 567,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 140,
+        "replacement": 0,
+        "hangul": 218,
+        "ascii": 198,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 11
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HaansoftBatang",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 5
+    },
+    {
+      "total_chars": 379,
+      "by_category": {
+        "math_operator": 2,
+        "private_use": 123,
+        "replacement": 0,
+        "hangul": 148,
+        "ascii": 97,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 9
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HaansoftBatang",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 6
+    },
+    {
+      "total_chars": 353,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 115,
+        "replacement": 0,
+        "hangul": 146,
+        "ascii": 91,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 1
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 7
+    },
+    {
+      "total_chars": 431,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 94,
+        "replacement": 0,
+        "hangul": 218,
+        "ascii": 114,
+        "superscript_subscript": 0,
+        "arrow": 1,
+        "other": 4
+      },
+      "fonts": [
+        "*¸íÁ¶",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-Áß°íµñ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*½Å¸í-ÅÂ°íµñ",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 8
+    },
+    {
+      "total_chars": 228,
+      "by_category": {
+        "math_operator": 2,
+        "private_use": 63,
+        "replacement": 0,
+        "hangul": 89,
+        "ascii": 64,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 10
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-µð³ª·ç",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 9
+    },
+    {
+      "total_chars": 471,
+      "by_category": {
+        "math_operator": 3,
+        "private_use": 81,
+        "replacement": 0,
+        "hangul": 240,
+        "ascii": 137,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 10
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 10
+    },
+    {
+      "total_chars": 380,
+      "by_category": {
+        "math_operator": 5,
+        "private_use": 95,
+        "replacement": 0,
+        "hangul": 163,
+        "ascii": 105,
+        "superscript_subscript": 0,
+        "arrow": 1,
+        "other": 11
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 11
+    },
+    {
+      "total_chars": 740,
+      "by_category": {
+        "math_operator": 11,
+        "private_use": 138,
+        "replacement": 0,
+        "hangul": 392,
+        "ascii": 195,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 4
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*¸íÁ¶",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß°íµñ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*½Å¸í-ÅÂ°íµñ",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 12
+    },
+    {
+      "total_chars": 187,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 49,
+        "replacement": 0,
+        "hangul": 66,
+        "ascii": 61,
+        "superscript_subscript": 0,
+        "arrow": 1,
+        "other": 10
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-µð³ª·ç",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 13
+    },
+    {
+      "total_chars": 302,
+      "by_category": {
+        "math_operator": 2,
+        "private_use": 86,
+        "replacement": 0,
+        "hangul": 115,
+        "ascii": 87,
+        "superscript_subscript": 0,
+        "arrow": 2,
+        "other": 10
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 14
+    },
+    {
+      "total_chars": 408,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 164,
+        "replacement": 0,
+        "hangul": 146,
+        "ascii": 84,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 14
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HaansoftBatang",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 15
+    },
+    {
+      "total_chars": 560,
+      "by_category": {
+        "math_operator": 5,
+        "private_use": 155,
+        "replacement": 0,
+        "hangul": 242,
+        "ascii": 150,
+        "superscript_subscript": 0,
+        "arrow": 1,
+        "other": 7
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*¸íÁ¶",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß°íµñ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*½Å¸í-ÅÂ°íµñ",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HaansoftBatang",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 16
+    },
+    {
+      "total_chars": 232,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 58,
+        "replacement": 0,
+        "hangul": 97,
+        "ascii": 67,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 10
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-µð³ª·ç",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 17
+    },
+    {
+      "total_chars": 378,
+      "by_category": {
+        "math_operator": 3,
+        "private_use": 97,
+        "replacement": 0,
+        "hangul": 151,
+        "ascii": 117,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 10
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 18
+    },
+    {
+      "total_chars": 443,
+      "by_category": {
+        "math_operator": 1,
+        "private_use": 81,
+        "replacement": 0,
+        "hangul": 183,
+        "ascii": 168,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 10
+      },
+      "fonts": [
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 19
+    },
+    {
+      "total_chars": 608,
+      "by_category": {
+        "math_operator": 1,
+        "private_use": 78,
+        "replacement": 0,
+        "hangul": 296,
+        "ascii": 223,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 10
+      },
+      "fonts": [
+        "*#ÅÂ°íµñ",
+        "*¸íÁ¶",
+        "*½Å¸í-°ß¸íÁ¶",
+        "*½Å¸í-½Å±×·¡ÇÈ",
+        "*½Å¸í-Áß°íµñ",
+        "*½Å¸í-Áß¸íÁ¶",
+        "*ÇÑ¾ç°ß°íµñ",
+        "*ÇÑ¾ç°ß¸íÁ¶",
+        "*ÇÑ¾ç½Å¸íÁ¶",
+        "Gulim",
+        "HaansoftBatang",
+        "HyhwpEQ"
+      ],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 20
+    }
+  ],
+  "pymupdf4llm": [
+    {
+      "total_chars": 573,
+      "by_category": {
+        "math_operator": 1,
+        "private_use": 107,
+        "replacement": 0,
+        "hangul": 115,
+        "ascii": 287,
+        "superscript_subscript": 0,
+        "arrow": 1,
+        "other": 62
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 1,
+      "markdown_preview": "홀수형\n\n2025학년도 대학수학능력시험 문제지\n##### **1**\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n|제 2 교시|홀수형|\n|---|---|\n|5지선다형<br>1. <br>× <br><br>의 값은? [2점]<br>① <br>②<br>③<br>④<br>⑤<br>2. 함수에 대하여lim<br>→<br><br>의 <br>값은? [2점]<br>①<br>②<br>③<br>④<br>⑤|3. 첫째항과 공비가 모두 양수인 등비수열이<br><br><br><br><br><br>을 만족시킬 때, 의 값은? [3점]<br>①<br>②<br>③<br>④<br>⑤<br>4. 함수<br><br><br><br><br><br><br><br><br><br>≥<br>가 실수 전체의 집합에서 연속일 때, 상수의 값은? [3점"
+    },
+    {
+      "total_chars": 55,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 28,
+        "ascii": 13,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 14
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 2,
+      "markdown_preview": "홀수형\n##### 2\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 59,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 28,
+        "ascii": 13,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 18
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 3,
+      "markdown_preview": "홀수형\n##### 3\n\n\n\n\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 61,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 28,
+        "ascii": 13,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 20
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 4,
+      "markdown_preview": "홀수형\n##### 4\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 55,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 28,
+        "ascii": 13,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 14
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 5,
+      "markdown_preview": "홀수형\n##### 5\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 59,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 28,
+        "ascii": 13,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 18
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 6,
+      "markdown_preview": "홀수형\n##### 6\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n\n\n\n\n\n\n\n\n"
+    },
+    {
+      "total_chars": 67,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 28,
+        "ascii": 13,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 26
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 7,
+      "markdown_preview": "홀수형\n##### 7\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 1561,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 245,
+        "replacement": 0,
+        "hangul": 618,
+        "ascii": 668,
+        "superscript_subscript": 0,
+        "arrow": 2,
+        "other": 28
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 8,
+      "markdown_preview": "|8|홀수형|Col3|\n|---|---|---|\n|21. 함수가 다음 조건을 만족시키도록<br>하는 두 정수, 에 대하여의 최댓값을 구하시오. [4점] <br>모든 실수에 대하여lim<br>→<br><br>의 값이 존재한다.|22. 모든 항이 정수이고 다음 조건을 만족시키는 모든 수열<br>에 대하여의 값의 합을 구하시오. [4점]<br>(가) 모든 자연수에 대하여<br><br><br><br><br><br><br><br><br><br><br><br><br><br>이다.<br>(나) 인 자연수의 최솟값은이다.<br>또는이 짝수인 경우<br>이 홀수인 경우<br>* 확인 사항<br>◦답안지의 해당란에 필요한 내용을 정확히 기입(표기)했는지 확인<br>하시오.<br>◦이어서,~~｢~~선택과목(확률과 통계)~~｣~~ 문제가 "
+    },
+    {
+      "total_chars": 393,
+      "by_category": {
+        "math_operator": 2,
+        "private_use": 63,
+        "replacement": 0,
+        "hangul": 103,
+        "ascii": 191,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 34
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 9,
+      "markdown_preview": "홀수형\n##### 2025학년도 대학수학능력시험 문제지 (확률과 통계) 13\n\n\n\n2025학년도 대학수학능력시험 문제지\n\n\n##### 13\n\n\n\n\n\n\n\n|제 2 교시 (|확률과 통계)<br>홀수형|\n|---|---|\n|5지선다형<br>23. 다항식<br>의 전개식에서의 계수는? [2점]<br>①<br>②<br>③<br>④<br>⑤|24. 두 사건, 에 대하여<br>PP<br>,P∩<br><br>일 때, P∪의 값은? [3점]<br>①<br><br>②<br><br>③<br><br><br>④<br><br>⑤<br><br>|\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 64,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 33,
+        "ascii": 18,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 13
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 10,
+      "markdown_preview": "##### 2 (확률과 통계) 홀수형\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 64,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 33,
+        "ascii": 18,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 13
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 11,
+      "markdown_preview": "##### 홀수형 (확률과 통계) 3\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 2420,
+      "by_category": {
+        "math_operator": 25,
+        "private_use": 341,
+        "replacement": 0,
+        "hangul": 1087,
+        "ascii": 931,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 36
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 12,
+      "markdown_preview": "||P≤≤|\n|---|---|\n|||\n|||\n|||\n|||\n\n\n|4 (확|확률과 통계) 홀수형|Col3|\n|---|---|---|\n|단답형<br>29. 정규분포N<br>을 따르는 확률변수와 정규분포<br>N<br>을 따르는 확률변수가 다음 조건을 만족시킨다.<br>모든 실수에 대하여<br>P≤P≥이고<br>P≤P≤이다.<br>P≤≤P≤≤의 <br>값을 오른쪽 표준정규분포표를<br>이용하여 구한 것이일 때, <br>의 값을 구하시오.<br>(단, 과 는 양수이다.) [4점]<br><br>P≤≤<br><br><br><br><br><br><br><br>|30. 탁자 위에개의 동전이 일렬로 놓여 있다. 이 개의"
+    },
+    {
+      "total_chars": 381,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 49,
+        "replacement": 0,
+        "hangul": 100,
+        "ascii": 185,
+        "superscript_subscript": 0,
+        "arrow": 1,
+        "other": 46
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 13,
+      "markdown_preview": "홀수형\n##### 2025학년도 대학수학능력시험 문제지 (미적분) 13\n\n\n\n홀수형\n##### 2025학년도 대학수학능력시험 문제지 (미적분) 13\n\n\n\n2025학년도 대학수학능력시험 문제지\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n|제 2 교시|(미적분)<br>홀수형|\n|---|---|\n|5지선다형<br>23. lim<br>→<br>sin<br><br>의 값은? [2점]<br>①<br>②<br>③<br>④<br>⑤|24. <br><br><br><br>의 값은? [3점]<br>①ln<br>②ln<br>③ln<br>④ln<br>⑤ln|\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 57,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 31,
+        "ascii": 17,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 9
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 14,
+      "markdown_preview": "##### 2 (미적분) 홀수형\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 61,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 31,
+        "ascii": 17,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 13
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 15,
+      "markdown_preview": "##### 홀수형 (미적분) 3\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 1931,
+      "by_category": {
+        "math_operator": 12,
+        "private_use": 393,
+        "replacement": 0,
+        "hangul": 691,
+        "ascii": 800,
+        "superscript_subscript": 0,
+        "arrow": 2,
+        "other": 33
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 16,
+      "markdown_preview": "|4|(미적분) 홀수형|Col3|\n|---|---|---|\n|단답형<br>29. 등비수열이<br><br><br>∞<br><br><br>,<br><br>∞<br><br><br><br>을 만족시킨다. 부등식<br>lim<br>→∞<br><br><br><br><br><br>× <br><br><br>을 만족시키는 모든 자연수의 값의 합을 구하시오. [4점]|30. 두 상수(≤≤),에 대하여 함수<br>sinsin가 다음 조건을 만족시킨다.<br>(가) , <br>(나) ′′인 양수의 최솟값은이다.<br>함수가 에서 극대인의 값 중 열린구간에 <br>속하는 모든 값의 집합을라 하자. 집합의 원소의 개수를, <br>집합의 원소 중 가장 작은 값을이라"
+    },
+    {
+      "total_chars": 393,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 58,
+        "replacement": 0,
+        "hangul": 130,
+        "ascii": 169,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 36
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 17,
+      "markdown_preview": "홀수형\n##### 2025학년도 대학수학능력시험 문제지 (기하) 13\n\n\n\n홀수형\n##### 2025학년도 대학수학능력시험 문제지 (기하) 13\n\n\n\n2025학년도 대학수학능력시험 문제지\n\n\n\n\n\n\n\n|제 2 교시|(기하)<br>홀수형|\n|---|---|\n|5지선다형<br>23. 두 벡터<br>, 에 대하여<br><br>일 때, 의 값은? [2점]<br>①<br>②<br>③<br>④<br>⑤|24. 꼭짓점의 좌표가이고, 준선이인 포물선이<br>점 를 지날 때, 양수의 값은? [3점]<br>①<br>②<br>③<br>④<br>⑤|\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 56,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 30,
+        "ascii": 17,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 9
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 18,
+      "markdown_preview": "##### 2 (기하) 홀수형\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 60,
+      "by_category": {
+        "math_operator": 0,
+        "private_use": 0,
+        "replacement": 0,
+        "hangul": 30,
+        "ascii": 17,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 13
+      },
+      "fonts": [],
+      "flagged": false,
+      "verdict": "CLEAN",
+      "page_number": 19,
+      "markdown_preview": "##### 홀수형 (기하) 3\n\n\n\n\n\n\n\n\n\n이 문제지에 관한 저작권은 한국교육과정평가원에 있습니다.\n\n\n"
+    },
+    {
+      "total_chars": 1331,
+      "by_category": {
+        "math_operator": 2,
+        "private_use": 156,
+        "replacement": 0,
+        "hangul": 463,
+        "ascii": 675,
+        "superscript_subscript": 0,
+        "arrow": 0,
+        "other": 35
+      },
+      "fonts": [],
+      "flagged": true,
+      "verdict": "DEGRADED",
+      "page_number": 20,
+      "markdown_preview": "##### 4 (기하) 홀수형\n\n\n\n\n\n\n|단답형<br><br>29. 두 초점이 F , F′ ()인 쌍곡선    이<br><br>있다. 이 쌍곡선 위에 있는 제사분면 위의 점 P 에 대하여<br> <br>직선 PF′ 위에 PQ PF 인 점 Q를 잡자.<br>삼각형 QF′F 와 삼각형 FF′P 가 서로 닮음일 때,<br><br>삼각형 PFQ의 넓이는   이다. 의 값을 구하시오.<br><br><br> <br>(단, PF′QF′ 이고, 와 는 서로소인 자연수이다.) [4점]|30. 좌표평면에 한 변의 길이가 인 정사각형 ABCD가 있다.<br> XB  XC  XB  XC<br><br>를 만족시키는 점 X가 나타내는 도형을 라 하자.<br>도형  위의 점 P 에 대하여<br>  <br>PQ  PB PD<br> <br>를 만족시키는 점을 Q라 할 때, AC⋅A"
+    }
+  ],
+  "summary": {
+    "pymupdf": {
+      "pages_degraded": 20,
+      "pages_has_math_unicode": 0,
+      "pages_clean": 0,
+      "total_private_use_chars": 2014,
+      "total_replacement_chars": 0,
+      "total_math_operator_chars": 37
+    },
+    "pymupdf4llm": {
+      "pages_degraded": 8,
+      "pages_has_math_unicode": 0,
+      "pages_clean": 12,
+      "total_private_use_chars": 1412,
+      "total_replacement_chars": 0,
+      "total_math_operator_chars": 42
+    },
+    "recommendation": "LLM_RECONSTRUCTION_MANDATORY — majority of pages have degraded text"
+  }
+}
