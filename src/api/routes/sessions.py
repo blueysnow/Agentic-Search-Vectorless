@@ -30,6 +30,7 @@ def list_all_sessions(
             session_id=s.session_id,
             document_id=s.document_id,
             total_turns=s.summary.total_turns,
+            first_query=s.turns[0].query if s.turns else None,
             created_at=s.created_at,
             updated_at=s.updated_at,
         )

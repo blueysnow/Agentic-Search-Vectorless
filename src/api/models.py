@@ -143,6 +143,7 @@ class SessionListItemResponse(BaseModel):
     session_id: str = Field(..., alias="sessionId")
     document_id: str | None = Field(None, alias="documentId")
     total_turns: int = Field(0, alias="totalTurns")
+    first_query: str | None = Field(None, alias="firstQuery")
     created_at: datetime | None = Field(None, alias="createdAt")
     updated_at: datetime | None = Field(None, alias="updatedAt")
 

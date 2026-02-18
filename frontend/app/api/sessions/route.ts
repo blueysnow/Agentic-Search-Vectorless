@@ -42,6 +42,7 @@ export async function GET(request: NextRequest) {
         updatedAt: string
         documentId?: string
         totalTurns?: number
+        firstQuery?: string
       }
       const sessions = (data.sessions || []).map((s: BackendSession) => ({
         id: s.sessionId,
@@ -49,7 +50,7 @@ export async function GET(request: NextRequest) {
         updatedAt: s.updatedAt,
         documentIds: s.documentId ? [s.documentId] : [],
         messageCount: s.totalTurns || 0,
-        preview: `Session with ${s.totalTurns || 0} turns`,
+        preview: s.firstQuery || `Session with ${s.totalTurns || 0} turns`,
       }))
       return NextResponse.json({ sessions })
     } finally {
